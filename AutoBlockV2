@@ -11,7 +11,6 @@ local TestService = game:GetService("TestService")
 local ChatEvents = ReplicatedStorage:FindFirstChild("DefaultChatSystemChatEvents")
 local SayMessageRequest = ChatEvents and ChatEvents:FindFirstChild("SayMessageRequest")
 local UserInputService = game:GetService("UserInputService")
-local StarterGui = game:GetService("StarterGui")
 
 -- Place in ReplicatedFirst (LocalScript
 
