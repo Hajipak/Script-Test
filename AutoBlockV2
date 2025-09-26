@@ -329,6 +329,19 @@ AutoBlockTab:CreateKeybind({
     Callback = function(Keybind)
         -- Fungsi yang dijalankan saat keybind ditekan
         autoBlockAudioOn = not autoBlockAudioOn
+         if autoBlockAudioOn then
+            StarterGui:SetCore("SendNotification", {
+                Title = "Auto Block Audio",
+                Text = "Enabled",
+                Duration = 2
+            })
+        else
+            StarterGui:SetCore("SendNotification", {
+                Title = "Auto Block Audio",
+                Text = "Disabled",
+                Duration = 2
+            })
+        end
     end,
 })
 
