@@ -1,275 +1,42 @@
--- Auto Block Rayfield Script (Full Features) with Mobile Keybind Support
+-- Auto Block Script with Keybind for Controller/Gamepad
+-- This script requires Rayfield UI to work
+
+-- Load Rayfield UI first
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+-- Services
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
-local GuiService = game:GetService("GuiService")
+local StarterGui = game:GetService("StarterGui")
+local Debris = game:GetService("Debris")
+
+-- Player variables
 local lp = Players.LocalPlayer
 local PlayerGui = lp:WaitForChild("PlayerGui")
 local Humanoid, Animator
-local StarterGui = game:GetService("StarterGui")
-local TestService = game:GetService("TestService")
+
+-- Chat variables
 local ChatEvents = ReplicatedStorage:FindFirstChild("DefaultChatSystemChatEvents")
 local SayMessageRequest = ChatEvents and ChatEvents:FindFirstChild("SayMessageRequest")
 
--- Keybind variables
-local autoBlockKey = Enum.KeyCode.A -- Default keybind for Auto Block
-local isKeyPressed = false
-local keybindEnabled = false -- Toggle untuk keybind controller
-local mobileButton = nil -- Untuk tombol mobile
-local mobileButtonEnabled = true -- Toggle untuk tombol mobile
-
--- Function to handle key press
-local function onInputBegan(input, gameProcessed)
-    if gameProcessed then return end
-    
-    if keybindEnabled and input.KeyCode == autoBlockKey then
-        isKeyPressed = true
-        if autoBlockAudioOn then
-            autoBlockOn = true
-            -- Notifikasi saat auto block diaktifkan
-            StarterGui:SetCore("SendNotification", {
-                Title = "Auto Block",
-                Text = "ENABLED",
-                Duration = 1
-            })
-        end
-    end
-end
-
--- Function to handle key release
-local function onInputEnded(input, gameProcessed)
-    if gameProcessed then return end
-    
-    if keybindEnabled and input.KeyCode == autoBlockKey then
-        isKeyPressed = false
-        autoBlockOn = false
-        -- Notifikasi saat auto block dinonaktifkan
-        StarterGui:SetCore("SendNotification", {
-            Title = "Auto Block",
-            Text = "DISABLED",
-            Duration = 1
-        })
-    end
-end
-
--- Function untuk membuat tombol mobile
-local function createMobileButton()
-    if mobileButton then return end
-    
-    mobileButton = Instance.new("TextButton")
-    mobileButton.Name = "AutoBlockButton"
-    mobileButton.Size = UDim2.new(0, 80, 0, 80)
-    mobileButton.Position = UDim2.new(0.5, -40, 0.8, 0)
-    mobileButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-    mobileButton.BackgroundTransparency = 0.3
-    mobileButton.Text = "A"
-    mobileButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-    mobileButton.TextScaled = true
-    mobileButton.Font = Enum.Font.SourceSansBold
-    mobileButton.Parent = PlayerGui
-    mobileButton.ZIndex = 10
-    mobileButton.Active = true
-    mobileButton.Draggable = true
-    
-    -- Membuat sudut membulat
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 15)
-    corner.Parent = mobileButton
-    
-    -- Membuat stroke
-    local stroke = Instance.new("UIStroke")
-    stroke.Thickness = 2
-    stroke.Color = Color3.fromRGB(255, 255, 255)
-    stroke.Parent = mobileButton
-    
-    -- Event untuk tombol
-    mobileButton.TouchBegan:Connect(function()
-        if keybindEnabled and autoBlockAudioOn then
-            autoBlockOn = not autoBlockOn
-            isKeyPressed = autoBlockOn
-            
-            -- Notifikasi dan perubahan warna
-            if autoBlockOn then
-                mobileButton.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
-                StarterGui:SetCore("SendNotification", {
-                    Title = "Auto Block",
-                    Text = "ENABLED",
-                    Duration = 1
-                })
-            else
-                mobileButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-                StarterGui:SetCore("SendNotification", {
-                    Title = "Auto Block",
-                    Text = "DISABLED",
-                    Duration = 1
-                })
-            end
-        end
-    end)
-    
-    -- Event untuk mengubah keybind (tap dan tahan)
-    local holdTime = 0
-    local holdConnection
-    
-    mobileButton.TouchBegan:Connect(function()
-        holdTime = tick()
-        holdConnection = RunService.Heartbeat:Connect(function()
-            if tick() - holdTime > 1 then -- Tahan selama 1 detik
-                -- Buka dialog untuk mengubah keybind
-                changeKeybindDialog()
-                holdConnection:Disconnect()
-            end
-        end)
-    end)
-    
-    mobileButton.TouchEnded:Connect(function()
-        if holdConnection then
-            holdConnection:Disconnect()
-        end
-    end)
-end
-
--- Function untuk dialog mengubah keybind
-local function changeKeybindDialog()
-    -- Membuat frame dialog
-    local dialog = Instance.new("Frame")
-    dialog.Name = "KeybindDialog"
-    dialog.Size = UDim2.new(0, 300, 0, 200)
-    dialog.Position = UDim2.new(0.5, -150, 0.5, -100)
-    dialog.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-    dialog.Parent = PlayerGui
-    dialog.ZIndex = 20
-    
-    -- Membuat sudut membulat
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 10)
-    corner.Parent = dialog
-    
-    -- Judul
-    local title = Instance.new("TextLabel")
-    title.Name = "Title"
-    title.Size = UDim2.new(1, 0, 0, 40)
-    title.Position = UDim2.new(0, 0, 0, 0)
-    title.BackgroundTransparency = 1
-    title.Text = "Change Keybind"
-    title.TextColor3 = Color3.fromRGB(255, 255, 255)
-    title.TextScaled = true
-    title.Font = Enum.Font.SourceSansBold
-    title.Parent = dialog
-    
-    -- Tombol-tombol keybind
-    local keybinds = {
-        {name = "A", key = Enum.KeyCode.A},
-        {name = "B", key = Enum.KeyCode.B},
-        {name = "C", key = Enum.KeyCode.C},
-        {name = "X", key = Enum.KeyCode.X},
-        {name = "Y", key = Enum.KeyCode.Y},
-        {name = "Z", key = Enum.KeyCode.Z},
-        {name = "Space", key = Enum.KeyCode.Space},
-        {name = "Shift", key = Enum.KeyCode.LeftShift}
-    }
-    
-    local buttonHeight = 30
-    local buttonSpacing = 5
-    local startY = 50
-    
-    for i, keybind in ipairs(keybinds) do
-        local button = Instance.new("TextButton")
-        button.Name = "Keybind_" .. keybind.name
-        button.Size = UDim2.new(1, -20, 0, buttonHeight)
-        button.Position = UDim2.new(0, 10, 0, startY + (i-1) * (buttonHeight + buttonSpacing))
-        button.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-        button.Text = keybind.name
-        button.TextColor3 = Color3.fromRGB(255, 255, 255)
-        button.TextScaled = true
-        button.Font = Enum.Font.SourceSans
-        button.Parent = dialog
-        
-        -- Sudut membulat
-        local btnCorner = Instance.new("UICorner")
-        btnCorner.CornerRadius = UDim.new(0, 5)
-        btnCorner.Parent = button
-        
-        -- Event saat tombol ditekan
-        button.TouchBegan:Connect(function()
-            autoBlockKey = keybind.key
-            mobileButton.Text = keybind.name
-            
-            -- Notifikasi
-            StarterGui:SetCore("SendNotification", {
-                Title = "Keybind Changed",
-                Text = "New keybind: " .. keybind.name,
-                Duration = 2
-            })
-            
-            -- Update UI
-            KeybindTab:CreateParagraph({
-                Title = "Current Keybind",
-                Content = keybind.name
-            })
-            
-            -- Hapus dialog
-            dialog:Destroy()
-        end)
-    end
-    
-    -- Tombol close
-    local closeButton = Instance.new("TextButton")
-    closeButton.Name = "CloseButton"
-    closeButton.Size = UDim2.new(0, 30, 0, 30)
-    closeButton.Position = UDim2.new(1, -35, 0, 5)
-    closeButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-    closeButton.Text = "X"
-    closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-    closeButton.TextScaled = true
-    closeButton.Font = Enum.Font.SourceSansBold
-    closeButton.Parent = dialog
-    
-    -- Sudut membulat untuk close button
-    local closeCorner = Instance.new("UICorner")
-    closeCorner.CornerRadius = UDim.new(0, 5)
-    closeCorner.Parent = closeButton
-    
-    closeButton.TouchBegan:Connect(function()
-        dialog:Destroy()
-    end)
-end
-
--- Connect input functions
-UserInputService.InputBegan:Connect(onInputBegan)
-UserInputService.InputEnded:Connect(onInputEnded)
-
--- Create mobile button on start
-if UserInputService.TouchEnabled then
-    createMobileButton()
-end
-
--- Handle character added (for mobile button)
-lp.CharacterAdded:Connect(function()
-    if UserInputService.TouchEnabled and mobileButtonEnabled then
-        createMobileButton()
-    end
-end)
-
--- Place in ReplicatedFirst (LocalScript
-
--- Continue script 
-local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
+-- Create Window
 local Window = Rayfield:CreateWindow({
-Name = "Auto Block Hub",
-LoadingTitle = "Auto Block Script",
-LoadingSubtitle = "by Skibidi Shots",
-ConfigurationSaving = {
-Enabled = true,
-FolderName = "AutoBlockHub",
-FileName = "Settings"
-},
-Discord = {Enabled = false},
-KeySystem = false
+    Name = "Auto Block Hub",
+    LoadingTitle = "Auto Block Script",
+    LoadingSubtitle = "by Skibidi Shots",
+    ConfigurationSaving = {
+        Enabled = true,
+        FolderName = "AutoBlockHub",
+        FileName = "Settings"
+    },
+    Discord = {Enabled = false},
+    KeySystem = false
 })
 
+-- Create Tabs
 local NoticeTab = Window:CreateTab("Notice", 4483362458)
 local AutoBlockTab = Window:CreateTab("Auto Block", 4483362458)
 local BDTab = Window:CreateTab("Better Detection", 4483362458)
@@ -279,7 +46,84 @@ local FakeBlockTab = Window:CreateTab("Fake Block", 4483362458)
 local AutoPunchTab = Window:CreateTab("Auto Punch", 4483362458)
 local CustomAnimationsTab = Window:CreateTab("Custom Animations", 4483362458)
 local MiscTab = Window:CreateTab("Misc", 4483362458)
-local KeybindTab = Window:CreateTab("Keybind", 4483362458)
+local KeybindTab = Window:CreateTab("Keybind", 4483362458) -- Keybind Tab
+
+-- Gamepad Auto Block Keybind System
+local autoBlockKeybind = Enum.KeyCode.ButtonX -- Default keybind (Button X pada controller)
+
+-- Fungsi untuk menampilkan notifikasi
+local function ShowNotification(title, text, duration)
+    StarterGui:SetCore("SendNotification", {
+        Title = title or "Notification",
+        Text = text or "Text",
+        Duration = duration or 3
+    })
+end
+
+-- Fungsi untuk mengubah keybind
+local function ChangeKeybind()
+    ShowNotification("Keybind Change", "Press any controller button now...", 5)
+    
+    -- Tunggu input dari user
+    local inputConnection
+    inputConnection = UserInputService.InputBegan:Connect(function(input)
+        -- Cek apakah input berasal dari controller
+        if input.UserInputType == Enum.UserInputType.Gamepad1 then
+            autoBlockKeybind = input.KeyCode
+            inputConnection:Disconnect()
+            ShowNotification("Keybind Changed", "New keybind: " .. tostring(autoBlockKeybind), 3)
+            -- Update tampilan keybind di UI
+            if currentKeybindLabel then
+                currentKeybindLabel.Content = "Current keybind: " .. tostring(autoBlockKeybind)
+            end
+        end
+    end)
+    
+    -- Timeout setelah 5 detik
+    task.delay(5, function()
+        if inputConnection then
+            inputConnection:Disconnect()
+            ShowNotification("Keybind Change", "Timeout. Keybind remains: " .. tostring(autoBlockKeybind), 3)
+        end
+    end)
+end
+
+-- Fungsi untuk toggle Auto Block Audio
+local function ToggleAutoBlockAudio()
+    autoBlockAudioOn = not autoBlockAudioOn
+    ShowNotification("Auto Block Audio", autoBlockAudioOn and "Enabled" or "Disabled", 2)
+end
+
+-- Deteksi input dari controller
+UserInputService.InputBegan:Connect(function(input)
+    -- Cek apakah input berasal dari controller dan tombol yang sesuai
+    if input.UserInputType == Enum.UserInputType.Gamepad1 and input.KeyCode == autoBlockKeybind then
+        ToggleAutoBlockAudio()
+    end
+end)
+
+-- Tambahkan elemen UI di tab Keybind
+KeybindTab:CreateButton({
+    Name = "Change Auto Block Keybind",
+    Callback = function()
+        ChangeKeybind()
+    end,
+})
+
+local currentKeybindLabel = KeybindTab:CreateParagraph({
+    Title = "Current Keybind",
+    Content = "Current keybind: " .. tostring(autoBlockKeybind)
+})
+
+KeybindTab:CreateParagraph({
+    Title = "Instructions",
+    Content = "1. Click 'Change Auto Block Keybind' button\n2. Press any controller button\n3. The new keybind will be saved\n\nThis keybind works specifically for controllers/gamepads on mobile devices."
+})
+
+KeybindTab:CreateParagraph({
+    Title = "Information",
+    Content = "This keybind will toggle Auto Block Audio on/off when pressed on your controller."
+})
 
 -- IDs.
 local autoBlockTriggerSounds = {
@@ -325,6 +169,7 @@ local _lastBlockMessageTime = _lastBlockMessageTime or 0
 local MESSAGE_BLOCK_COOLDOWN = 0.6 -- overall throttle (seconds)
 local _blockPrevPlaying = _blockPrevPlaying or {} -- persist between frames
 
+
 local autoBlockTriggerAnims = {
     "126830014841198", "126355327951215", "121086746534252", "18885909645",
     "98456918873918", "105458270463374", "83829782357897", "125403313786645",
@@ -343,7 +188,7 @@ local looseFacing = true
 local detectionRange = 18
 local messageWhenAutoBlockOn = false
 local messageWhenAutoBlock = ""
-local Debris = game:GetService("Debris")
+-- local fasterAudioAB = false (this is scrapped. im too lazy to remove it)
 -- Anti-flick toggle state
 local antiFlickOn = false
 -- how many anti-flick parts to spawn (default 4)
@@ -414,6 +259,7 @@ local KillersFolder = workspace:WaitForChild("Players"):WaitForChild("Killers")
 
 local lastBlockTime = 0
 local lastPunchTime = 0
+
 
 local blockAnimIds = {
 "72722244508749",
@@ -553,20 +399,6 @@ AutoBlockTab:CreateToggle({
     Flag = "AutoBlockAudio",
     Callback = function(state)
         autoBlockAudioOn = state
-        if state then
-            StarterGui:SetCore("SendNotification", {
-                Title = "Auto Block Audio",
-                Text = "Enabled - Press A to activate",
-                Duration = 3
-            })
-        else
-            StarterGui:SetCore("SendNotification", {
-                Title = "Auto Block Audio",
-                Text = "Disabled",
-                Duration = 3
-            })
-            autoBlockOn = false
-        end
     end,
 })
 
@@ -859,8 +691,6 @@ local function addKillerCircle(killer)
 
     detectionCircles[killer] = circle
 end
-
--- Update radius when detectionRange changes (and on render)
 
 -- Function to remove circle from a killer
 local function removeKillerCircle(killer)
@@ -1239,7 +1069,7 @@ FakeBlockTab:CreateButton({
                 print("✅ Fake Block GUI enabled")
             end
         end)
-    end,
+    end
 })
 
 AutoPunchTab:CreateToggle({
@@ -1360,17 +1190,8 @@ MiscTab:CreateButton({
 -- Assumes your script already requires RunService and Players in the file,
 -- but this block gets its own references so it can be pasted standalone.
 
-local RunService = game:GetService("RunService")
-local Players = game:GetService("Players")
-local lp = Players.LocalPlayer
-
 -- Detector IDs table (use existing chargeAnimIds if available)
 local detectorChargeIds = (type(chargeAnimIds) == "table" and chargeAnimIds) or {}
-
--- Optional: detect a custom charge anim id (if you already use these vars elsewhere)
--- set customChargeEnabled = true and customChargeAnimId = "123456" elsewhere in your script to detect custom anim too
--- local customChargeEnabled = false
--- local customChargeAnimId = ""
 
 -- Override speed (same as your noli script)
 local ORIGINAL_DASH_SPEED = 60
@@ -1559,9 +1380,6 @@ _G.ControlCharge_SetEnabled = ControlCharge_SetEnabled
 -- _G.ControlCharge_SetEnabled(false) -- disable
 -- =======================================================================
 
--- Rayfield GUI for Control Charge (paste near your other CustomAnimationsTab UI code)
--- Requires CustomAnimationsTab from your Rayfield Window (already present in your big script)
-
 -- initialize global defaults so the control block can read them
 _G.ControlCharge_DashSpeed = _G.ControlCharge_DashSpeed or 60
 _G.ControlCharge_CustomEnabled = _G.ControlCharge_CustomEnabled or false
@@ -1605,7 +1423,7 @@ MiscTab:CreateToggle({
                 StaminaModule.StaminaLossDisabled = false
             end
         end
-    end,
+    end
 })
 
 local function addESP(obj)
@@ -1708,154 +1526,15 @@ MiscTab:CreateToggle({
     end,
 })
 
--- === KEYBIND TAB ===
-
--- Status Keybind
-KeybindTab:CreateParagraph({
-    Title = "Keybind Status",
-    Content = keybindEnabled and "ENABLED" or "DISABLED"
-})
-
--- Toggle untuk mengaktifkan keybind
-KeybindTab:CreateToggle({
-    Name = "Enable Keybind Controller",
-    CurrentValue = false,
-    Flag = "KeybindEnabled",
-    Callback = function(Value)
-        keybindEnabled = Value
-        
-        -- Update status paragraph
-        KeybindTab:CreateParagraph({
-            Title = "Keybind Status",
-            Content = keybindEnabled and "ENABLED" or "DISABLED"
-        })
-        
-        if Value then
-            SendNotif("Keybind Controller", "Enabled - Press A to activate auto block", 3)
-            -- Notifikasi untuk mobile
-            if UserInputService.TouchEnabled then
-                StarterGui:SetCore("SendNotification", {
-                    Title = "Mobile Mode",
-                    Text = "Tap the red button to toggle auto block",
-                    Duration = 3
-                })
-            end
-        else
-            SendNotif("Keybind Controller", "Disabled", 3)
-            autoBlockOn = false
-        end
-    end,
-})
-
--- Toggle untuk tombol mobile
-KeybindTab:CreateToggle({
-    Name = "Mobile Button",
-    CurrentValue = true,
-    Flag = "MobileButton",
-    Callback = function(Value)
-        mobileButtonEnabled = Value
-        if Value then
-            if UserInputService.TouchEnabled and not mobileButton then
-                createMobileButton()
-            end
-            SendNotif("Mobile Button", "Enabled", 2)
-        else
-            if mobileButton then
-                mobileButton:Destroy()
-                mobileButton = nil
-            end
-            SendNotif("Mobile Button", "Disabled", 2)
-        end
-    end,
-})
-
--- Informasi keybind
-KeybindTab:CreateParagraph({
-    Title = "Current Keybind",
-    Content = tostring(autoBlockKey.Name)
-})
-
-KeybindTab:CreateParagraph({
-    Title = "Instructions",
-    Content = "PC: Press " .. tostring(autoBlockKey.Name) .. " to toggle\nMobile: Tap the red button"
-})
-
-KeybindTab:CreateParagraph({
-    Title = "Mobile Instructions",
-    Content = "• Tap button to toggle auto block\n• Hold button for 1 second to change keybind\n• Button is draggable"
-})
-
--- Visual indicator
-KeybindTab:CreateParagraph({
-    Title = "Visual Indicator",
-    Content = "Button turns GREEN when auto block is active\nButton turns RED when auto block is inactive"
-})
-
--- Button to change keybind
-KeybindTab:CreateButton({
-    Name = "Change Keybind (PC)",
-    Callback = function()
-        -- Show notification to press a new key
-        SendNotif("Keybind Change", "Press the key you want to use for Auto Block", 5)
-        
-        -- Wait for user input
-        local connection
-        connection = UserInputService.InputBegan:Connect(function(input, gameProcessed)
-            if gameProcessed then return end
-            
-            -- Make sure input is a keyboard key
-            if input.UserInputType == Enum.UserInputType.Keyboard then
-                -- Update keybind
-                autoBlockKey = input.KeyCode
-                
-                -- Update notification
-                SendNotif("Keybind Changed", "New keybind: " .. tostring(autoBlockKey.Name), 3)
-                
-                -- Disconnect connection
-                connection:Disconnect()
-                
-                -- Update UI
-                KeybindTab:CreateParagraph({
-                    Title = "Current Keybind",
-                    Content = tostring(autoBlockKey.Name)
-                })
-                
-                -- Update mobile button text if exists
-                if mobileButton then
-                    mobileButton.Text = tostring(autoBlockKey.Name)
-                end
-            end
-        end)
-    end,
-})
-
--- Button untuk mobile keybind changer
-KeybindTab:CreateButton({
-    Name = "Change Keybind (Mobile)",
-    Callback = function()
-        if UserInputService.TouchEnabled then
-            changeKeybindDialog()
-        else
-            SendNotif("Not Mobile", "This feature is for mobile users only", 3)
-        end
-    end,
-})
-
--- Status mobile
-KeybindTab:CreateParagraph({
-    Title = "Device Status",
-    Content = UserInputService.TouchEnabled and "MOBILE DETECTED" or "PC DETECTED"
-})
-
 -- Helpers
 local function fireRemoteBlock()
-local args = {"UseActorAbility", "Block"}
-ReplicatedStorage:WaitForChild("Modules"):WaitForChild("Network"):WaitForChild("RemoteEvent"):FireServer(unpack(args))
+    local args = {"UseActorAbility", "Block"}
+    ReplicatedStorage:WaitForChild("Modules"):WaitForChild("Network"):WaitForChild("RemoteEvent"):FireServer(unpack(args))
 end
 
 local function fireRemotePunch()
-local args = {"UseActorAbility", "Punch"}
-ReplicatedStorage:WaitForChild("Modules"):WaitForChild("Network"):WaitForChild("RemoteEvent"):FireServer(unpack(args))
+    local args = {"UseActorAbility", "Punch"}
+    ReplicatedStorage:WaitForChild("Modules"):WaitForChild("Network"):WaitForChild("RemoteEvent"):FireServer(unpack(args))
 end
 
 -- Push *into* the killer (drops in for doLegitBlockTP_withVelocity)
@@ -1888,144 +1567,20 @@ local function playCustomAnim(animId, isPunch)
     -- Create and load the animation
     local anim = Instance.new("Animation")
     anim.AnimationId = "rbxassetid://" .. animId
-
-    local animator = Humanoid:FindFirstChildOfClass("Animator") or Instance.new("Animator", Humanoid)
-    local track = animator:LoadAnimation(anim)
-
+    
+    -- Load the animation
+    local track = Humanoid:LoadAnimation(anim)
+    
+    -- Play the animation
     track:Play()
-
+    
+    -- Update the last used time
     if isPunch then
         lastPunchTime = now
     else
         lastBlockTime = now
     end
-
-    return track
 end
 
--- Ensure the character is loaded
-local function ensureCharacter()
-    if not lp.Character then
-        lp.CharacterAdded:Wait()
-    end
-    return lp.Character
-end
-
--- Get the character's humanoid
-local function getHumanoid()
-    local char = ensureCharacter()
-    return char and char:FindFirstChildOfClass("Humanoid")
-end
-
--- Get the character's humanoid root part
-local function getHumanoidRootPart()
-    local char = ensureCharacter()
-    return char and char:FindFirstChild("HumanoidRootPart")
-end
-
--- Check if a killer is within range
-local function isKillerInRange(killer, range)
-    local myHRP = getHumanoidRootPart()
-    local killerHRP = killer and killer:FindFirstChild("HumanoidRootPart")
-    
-    if not myHRP or not killerHRP then
-        return false
-    end
-    
-    local distance = (myHRP.Position - killerHRP.Position).Magnitude
-    return distance <= range
-end
-
--- Check if killer is facing the player
-local function isKillerFacingPlayer(killer)
-    local myHRP = getHumanoidRootPart()
-    local killerHRP = killer and killer:FindFirstChild("HumanoidRootPart")
-    
-    if not myHRP or not killerHRP then
-        return false
-    end
-    
-    local direction = (myHRP.Position - killerHRP.Position).Unit
-    local dot = killerHRP.CFrame.LookVector:Dot(direction)
-    return dot > (customFacingDot or -0.3)
-end
-
--- Main auto block function
-local function autoBlock()
-    if not autoBlockOn then return end
-    
-    local myHRP = getHumanoidRootPart()
-    if not myHRP then return end
-    
-    for _, killerName in ipairs(killerNames) do
-        local killer = KillersFolder:FindFirstChild(killerName)
-        if killer and isKillerInRange(killer, detectionRange) and isKillerFacingPlayer(killer) then
-            -- Block the attack
-            fireRemoteBlock()
-            
-            -- Play custom animation if enabled
-            if customBlockEnabled and customBlockAnimId ~= "" then
-                playCustomAnim(customBlockAnimId, false)
-            end
-            
-            -- Send message if enabled
-            if messageWhenAutoBlockOn and messageWhenAutoBlock ~= "" then
-                SendNotif("Auto Block", messageWhenAutoBlock, 1)
-            end
-            
-            break -- Only block one killer at a time
-        end
-    end
-end
-
--- Main auto punch function
-local function autoPunch()
-    if not autoPunchOn then return end
-    
-    local myHRP = getHumanoidRootPart()
-    if not myHRP then return end
-    
-    for _, killerName in ipairs(killerNames) do
-        local killer = KillersFolder:FindFirstChild(killerName)
-        if killer and isKillerInRange(killer, detectionRange) then
-            -- Punch the killer
-            fireRemotePunch()
-            
-            -- Play custom animation if enabled
-            if customPunchEnabled and customPunchAnimId ~= "" then
-                playCustomAnim(customPunchAnimId, true)
-            end
-            
-            -- Fling punch if enabled
-            if flingPunchOn then
-                local killerHRP = killer:FindFirstChild("HumanoidRootPart")
-                if killerHRP then
-                    local start = tick()
-                    while tick() - start < 1 do
-                        if myHRP and killerHRP and killerHRP.Parent then
-                            local frontPos = killerHRP.Position + (killerHRP.CFrame.LookVector * 2)
-                            myHRP.CFrame = CFrame.new(frontPos, killerHRP.Position)
-                        end
-                        task.wait()
-                    end
-                end
-            end
-            
-            -- Send message if enabled
-            if messageWhenAutoPunchOn and messageWhenAutoPunch ~= "" then
-                SendNotif("Auto Punch", messageWhenAutoPunch, 1)
-            end
-            
-            break -- Only punch one killer at a time
-        end
-    end
-end
-
--- Main loop
-RunService.Heartbeat:Connect(function()
-    autoBlock()
-    autoPunch()
-end)
-
--- Load configuration
-Rayfield:LoadConfiguration()
+-- Notification when script is loaded
+ShowNotification("Auto Block Script", "Script loaded successfully! Press X on your controller to toggle Auto Block Audio.", 5)
