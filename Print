@@ -1,0 +1,6 @@
+-- Test File untuk Mengecek Koneksi GitHub
+print("=== GITHUB CONNECTION TEST ===")
+print("File test.lua berhasil di-load dari GitHub!")
+print("Waktu saat ini:", os.date("%H:%M:%S"))
+print("Username LocalPlayer:", game.Players.LocalPlayer.Name)
+print("=== TEST SELESAI ===")
