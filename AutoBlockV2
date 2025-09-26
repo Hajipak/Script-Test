@@ -20,7 +20,7 @@ local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
 local Window = Rayfield:CreateWindow({
 Name = "Auto Block Hub",
 LoadingTitle = "Auto Block Script",
-LoadingSubtitle = "by Skibidi Shots",
+LoadingSubtitle = "by YAR and Skibidi333",
 ConfigurationSaving = {
 Enabled = true,
 FolderName = "AutoBlockHub",
@@ -321,16 +321,20 @@ AutoBlockTab:CreateToggle({
     end,
 })
 
-local Keybind = KeybindTab:CreateKeybind({
+AutoBlockTab:CreateKeybind({
     Name = "Controller Auto Block Toggle",
     CurrentKeybind = "ButtonX", -- Default tombol X pada controller
     HoldToInteract = false,
     Flag = "ControllerAutoBlockKeybind", -- Flag unik untuk konfigurasi
     Callback = function(Keybind)
         -- Fungsi yang dijalankan saat keybind ditekan
-        -- Karena HoldToInteract = false, fungsi ini akan dipanggil saat tombol ditekan
-        ToggleAutoBlockAudio()
+        autoBlockAudioOn = not autoBlockAudioOn
     end,
+})
+
+AutoBlockTab:CreateParagraph({
+    Title = "Controller Keybind",
+    Content = "Use the keybind above to toggle Auto Block Audio with your controller."
 })
 
 -- make sure AutoBlockTab is a valid Rayfield tab object
