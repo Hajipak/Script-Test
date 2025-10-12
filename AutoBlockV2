@@ -729,7 +729,7 @@ BDTab:CreateToggle({
 
 BDTab:CreateSlider({
     Name = "How many block parts that spawn",
-    Range = {1, 16},       -- min,max parts the player can pick
+    Range = {1, 30},       -- Diubah dari {1, 16} menjadi {1, 30}
     Increment = 1,         -- step size (integer only)
     Suffix = "parts",
     CurrentValue = 4,      -- default shown in UI
@@ -783,7 +783,7 @@ BDTab:CreateInput({
     Callback = function(text)
         local num = tonumber(text)
         if num then
-            antiFlickDelay = math.max(0, num) -- don’t allow negative
+            antiFlickDelay = math.max(0, num) -- donâ€™t allow negative
         end
     end,
 })
@@ -892,7 +892,7 @@ BDTab:CreateInput({
     Callback = function(text)
         local num = tonumber(text)
         if num then
-            stagger = math.max(0, num) -- don’t allow negative
+            stagger = math.max(0, num) -- donâ€™t allow negative
         end
     end,
 })
@@ -907,7 +907,7 @@ BDTab:CreateInput({
     Callback = function(text)
         local num = tonumber(text)
         if num then
-            antiFlickBaseOffset = math.max(0, num) -- don’t allow negative
+            antiFlickBaseOffset = math.max(0, num) -- donâ€™t allow negative
         end
     end,
 })
@@ -1030,11 +1030,11 @@ FakeBlockTab:CreateButton({
                     return loadstring(game:HttpGet("https://raw.githubusercontent.com/skibidi399/Auto-block-script/refs/heads/main/fakeblock"))()
                 end)
                 if not success then
-                    warn("❌ Failed to load Fake Block GUI:", result)
+                    warn("âŒ Failed to load Fake Block GUI:", result)
                 end
             else
                 fakeGui.Enabled = true
-                print("✅ Fake Block GUI enabled")
+                print("âœ… Fake Block GUI enabled")
             end
         end)
     end
@@ -1414,7 +1414,7 @@ local function addESP(obj)
     if not obj:FindFirstChild("HumanoidRootPart") then return end
 
     local plr = Players:GetPlayerFromCharacter(obj)
-    if not plr then return end -- ✅ only add ESP if it's a player character
+    if not plr then return end -- âœ… only add ESP if it's a player character
 
     -- Prevent duplicates
     if obj:FindFirstChild("ESP_Highlight") then return end
@@ -1561,7 +1561,7 @@ local function playCustomAnim(animId, isPunch)
     end)
 
     if success and track then
-        print("✅ Playing custom " .. (isPunch and "punch" or "block") .. " animation:", animId)
+        print("âœ… Playing custom " .. (isPunch and "punch" or "block") .. " animation:", animId)
         track:Play()
         if isPunch then
             lastPunchTime = now
@@ -1569,7 +1569,7 @@ local function playCustomAnim(animId, isPunch)
             lastBlockTime = now
         end
     else
-        warn("❌ Failed to load or play custom animation: " .. animId)
+        warn("âŒ Failed to load or play custom animation: " .. animId)
     end
 end
 
