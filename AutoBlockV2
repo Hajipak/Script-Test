@@ -106,6 +106,10 @@ local looseFacing = true
 local detectionRange = 18
 local messageWhenAutoBlockOn = false
 local messageWhenAutoBlock = ""
+local doublePunchCooldown = false
+local doublePunchDelay = 0.15 -- Waktu jeda antara punch pertama dan kedua
+local blockPartsTransparency = 0.7 -- Transparansi parts (0 = tidak transparan, 1 = transparan penuh)
+local autoBlockDelay = 0 -- Delay sebelum block dieksekusi (detik)
 -- local fasterAudioAB = false (this is scrapped. im too lazy to remove it)
 local Debris = game:GetService("Debris")
 -- Anti-flick toggle state
@@ -615,14 +619,27 @@ AutoBlockTab:CreateParagraph({
 })
 
 AutoBlockTab:CreateInput({
-Name = "Detection Range",
-PlaceholderText = "18",
-RemoveTextAfterFocusLost = false,
-Flag = "DetectionRange",
-Callback = function(Text)
-detectionRange = tonumber(Text) or detectionRange
-detectionRangeSq = detectionRange * detectionRange
-end
+    Name = "Detection Range",
+    PlaceholderText = "18",
+    RemoveTextAfterFocusLost = false,
+    Flag = "DetectionRange",
+    Callback = function(Text)
+        detectionRange = tonumber(Text) or detectionRange
+        detectionRangeSq = detectionRange * detectionRange
+    end,
+})
+
+-- TAMBAHKAN SLIDER INI SETELAH DETECTION RANGE:
+AutoBlockTab:CreateSlider({
+    Name = "Auto Block Delay",
+    Range = {0, 1},        -- 0 = langsung block, 1 = delay 1 detik
+    Increment = 0.01,
+    Suffix = "seconds",
+    CurrentValue = 0,      -- default 0 (tanpa delay)
+    Flag = "AutoBlockDelay",
+    Callback = function(val)
+        autoBlockDelay = tonumber(val) or 0
+    end,
 })
 
 
@@ -748,6 +765,19 @@ BDTab:CreateSlider({
     Flag = "BlockPartsSizeMultiplier",
     Callback = function(val)
         blockPartsSizeMultiplier = tonumber(val) or 1
+    end,
+})
+
+-- TAMBAHKAN SLIDER INI SETELAH SIZE MULTIPLIER:
+BDTab:CreateSlider({
+    Name = "Block Parts Transparency",
+    Range = {0, 1},        -- 0 = tidak transparan, 1 = transparan penuh
+    Increment = 0.05,
+    Suffix = "",
+    CurrentValue = 0.7,    -- default 0.7
+    Flag = "BlockPartsTransparency",
+    Callback = function(val)
+        blockPartsTransparency = tonumber(val) or 0.7
     end,
 })
 
