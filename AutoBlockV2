@@ -729,13 +729,18 @@ BDTab:CreateToggle({
 
 BDTab:CreateSlider({
     Name = "How many block parts that spawn",
-    Range = {1, 30},       -- Diubah dari {1, 16} menjadi {1, 30}
+    Range = {1, 16},       -- min,max parts the player can pick
     Increment = 1,         -- step size (integer only)
     Suffix = "parts",
     CurrentValue = 4,      -- default shown in UI
     Flag = "AntiFlickParts",
     Callback = function(val)
         antiFlickParts = math.max(1, math.floor(val))
+        StarterGui:SetCore("SendNotification", {
+            Title = "Anti-Flick Parts Updated",
+            Text = "Now using " .. antiFlickParts .. " parts",
+            Duration = 2
+        })
     end,
 })
 
@@ -918,6 +923,16 @@ TechTab:CreateToggle({
     Flag = "doubleblockTechtoggle",
     Callback = function(state)
         doubleblocktech = state
+
+    -- Ensure double punch tech doesn't trigger while blocking
+    RunService.RenderStepped:Connect(function()
+        if doubleblocktech then
+            local isBlocking = cachedBlockBtn and cachedBlockBtn:FindFirstChild("CooldownTime") and cachedBlockBtn.CooldownTime.Text ~= ""
+            if isBlocking then
+                doubleblocktech = false
+            end
+        end
+    end)
     end,
 })
 
