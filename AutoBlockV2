@@ -781,6 +781,53 @@ BDTab:CreateSlider({
     end,
 })
 
+-- Better Detection (Anti-Flick)
+if antiFlickOn then
+    for _, killer in pairs(KillersFolder:GetChildren()) do
+        local killerHRP = killer:FindFirstChild("HumanoidRootPart")
+        if killerHRP then
+            local distance = (myRoot.Position - killerHRP.Position).Magnitude
+            if distance <= detectionRange and isFacing(myRoot, killerHRP) then
+                if tick() - lastBlockTime > 0.5 then
+                    -- Create anti-flick parts
+                    task.spawn(function()
+                        task.wait(antiFlickDelay)
+                        
+                        for i = 1, antiFlickParts do
+                            local part = Instance.new("Part")
+                            part.Size = Vector3.new(2 * blockPartsSizeMultiplier, 1 * blockPartsSizeMultiplier, 2 * blockPartsSizeMultiplier)
+                            part.Material = Enum.Material.Neon
+                            part.BrickColor = BrickColor.new("Bright blue")
+                            part.Anchored = true
+                            part.CanCollide = false
+                            part.Transparency = blockPartsTransparency -- GANTI BARIS INI
+                            
+                            -- Position part in front of killer
+                            local offset = antiFlickBaseOffset + (i-1) * antiFlickOffsetStep
+                            part.CFrame = killerHRP.CFrame * CFrame.new(0, 0, -offset)
+                            part.Parent = workspace
+                            
+                            Debris:AddItem(part, 1)
+                            
+                            if i < antiFlickParts then
+                                task.wait(stagger)
+                            end
+                        end
+                    end)
+                    
+                    fireRemoteBlock()
+                    lastBlockTime = tick()
+                    
+                    if messageWhenAutoBlockOn and messageWhenAutoBlock ~= "" and tick() - _lastBlockMessageTime > MESSAGE_BLOCK_COOLDOWN then
+                        SayMessageRequest:FireServer(messageWhenAutoBlock, "All")
+                        _lastBlockMessageTime = tick()
+                    end
+                end
+            end
+        end
+    end
+end
+
 BDTab:CreateSlider({
     Name = "Forward Prediction Strength",
     Range = {0, 10},        -- 1x .. 10x
