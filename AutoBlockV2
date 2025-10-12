@@ -20,7 +20,7 @@ local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
 local Window = Rayfield:CreateWindow({
 Name = "Auto Block Hub",
 LoadingTitle = "Auto Block Script",
-LoadingSubtitle = "by YAR and Skibidi399",
+LoadingSubtitle = "by YAR/Zen and Skibidi399",
 ConfigurationSaving = {
 Enabled = true,
 FolderName = "AutoBlockHub",
@@ -106,10 +106,6 @@ local looseFacing = true
 local detectionRange = 18
 local messageWhenAutoBlockOn = false
 local messageWhenAutoBlock = ""
-local doublePunchCooldown = false
-local doublePunchDelay = 0.15 -- Waktu jeda antara punch pertama dan kedua
-local blockPartsTransparency = 0.7 -- Transparansi parts (0 = tidak transparan, 1 = transparan penuh)
-local autoBlockDelay = 0 -- Delay sebelum block dieksekusi (detik)
 -- local fasterAudioAB = false (this is scrapped. im too lazy to remove it)
 local Debris = game:GetService("Debris")
 -- Anti-flick toggle state
@@ -619,27 +615,14 @@ AutoBlockTab:CreateParagraph({
 })
 
 AutoBlockTab:CreateInput({
-    Name = "Detection Range",
-    PlaceholderText = "18",
-    RemoveTextAfterFocusLost = false,
-    Flag = "DetectionRange",
-    Callback = function(Text)
-        detectionRange = tonumber(Text) or detectionRange
-        detectionRangeSq = detectionRange * detectionRange
-    end,
-})
-
--- TAMBAHKAN SLIDER INI SETELAH DETECTION RANGE:
-AutoBlockTab:CreateSlider({
-    Name = "Auto Block Delay",
-    Range = {0, 1},        -- 0 = langsung block, 1 = delay 1 detik
-    Increment = 0.01,
-    Suffix = "seconds",
-    CurrentValue = 0,      -- default 0 (tanpa delay)
-    Flag = "AutoBlockDelay",
-    Callback = function(val)
-        autoBlockDelay = tonumber(val) or 0
-    end,
+Name = "Detection Range",
+PlaceholderText = "18",
+RemoveTextAfterFocusLost = false,
+Flag = "DetectionRange",
+Callback = function(Text)
+detectionRange = tonumber(Text) or detectionRange
+detectionRangeSq = detectionRange * detectionRange
+end
 })
 
 
@@ -765,19 +748,6 @@ BDTab:CreateSlider({
     Flag = "BlockPartsSizeMultiplier",
     Callback = function(val)
         blockPartsSizeMultiplier = tonumber(val) or 1
-    end,
-})
-
--- TAMBAHKAN SLIDER INI SETELAH SIZE MULTIPLIER:
-BDTab:CreateSlider({
-    Name = "Block Parts Transparency",
-    Range = {0, 1},        -- 0 = tidak transparan, 1 = transparan penuh
-    Increment = 0.05,
-    Suffix = "",
-    CurrentValue = 0.7,    -- default 0.7
-    Flag = "BlockPartsTransparency",
-    Callback = function(val)
-        blockPartsTransparency = tonumber(val) or 0.7
     end,
 })
 
@@ -2438,53 +2408,6 @@ RunService.RenderStepped:Connect(function()
         end
     end
 end)
-
--- Better Detection (Anti-Flick)
-if antiFlickOn then
-    for _, killer in pairs(KillersFolder:GetChildren()) do
-        local killerHRP = killer:FindFirstChild("HumanoidRootPart")
-        if killerHRP then
-            local distance = (myRoot.Position - killerHRP.Position).Magnitude
-            if distance <= detectionRange and isFacing(myRoot, killerHRP) then
-                if tick() - lastBlockTime > 0.5 then
-                    -- Create anti-flick parts
-                    task.spawn(function()
-                        task.wait(antiFlickDelay)
-                        
-                        for i = 1, antiFlickParts do
-                            local part = Instance.new("Part")
-                            part.Size = Vector3.new(2 * blockPartsSizeMultiplier, 1 * blockPartsSizeMultiplier, 2 * blockPartsSizeMultiplier)
-                            part.Material = Enum.Material.Neon
-                            part.BrickColor = BrickColor.new("Bright blue")
-                            part.Anchored = true
-                            part.CanCollide = false
-                            part.Transparency = blockPartsTransparency -- GANTI BARIS INI
-                            
-                            -- Position part in front of killer
-                            local offset = antiFlickBaseOffset + (i-1) * antiFlickOffsetStep
-                            part.CFrame = killerHRP.CFrame * CFrame.new(0, 0, -offset)
-                            part.Parent = workspace
-                            
-                            Debris:AddItem(part, 1)
-                            
-                            if i < antiFlickParts then
-                                task.wait(stagger)
-                            end
-                        end
-                    end)
-                    
-                    fireRemoteBlock()
-                    lastBlockTime = tick()
-                    
-                    if messageWhenAutoBlockOn and messageWhenAutoBlock ~= "" and tick() - _lastBlockMessageTime > MESSAGE_BLOCK_COOLDOWN then
-                        SayMessageRequest:FireServer(messageWhenAutoBlock, "All")
-                        _lastBlockMessageTime = tick()
-                    end
-                end
-            end
-        end
-    end
-end
 
 -- If Better Detection (antiFlickOn) is enabled, watch for blue AntiFlickZone parts near the player
 -- and trigger dragging when they appear in range.
