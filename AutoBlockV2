@@ -108,6 +108,10 @@ local messageWhenAutoBlockOn = false
 local messageWhenAutoBlock = ""
 -- local fasterAudioAB = false (this is scrapped. im too lazy to remove it)
 local Debris = game:GetService("Debris")
+--- AUDIO PART DELAY SETTINGS ---
+local audioPartDelayMs = 20        -- Delay part untuk Auto Block Audio (milidetik)
+local animationPartDelay = 0.02     -- Delay part untuk Auto Block Animation (detik)
+------------------------------------
 -- Anti-flick toggle state
 local antiFlickOn = false
 -- how many anti-flick parts to spawn (default 4)
@@ -250,6 +254,63 @@ lp.CharacterAdded:Connect(function(char)
     task.wait(0.5) -- allow Humanoid/Animator to be created
     refreshAnimator()
 end)
+
+--- VALIDATION HELPER FUNCTIONS ---
+local function validateMsInput(input, minVal, maxVal, defaultVal)
+    local num = tonumber(input)
+    if num then
+        return math.max(minVal, math.min(maxVal, num))
+    else
+        return defaultVal
+    end
+end
+
+local function validateAndSetAudioDelay(input)
+    audioPartDelayMs = validateMsInput(input, 0, 1000, 20) -- Maks 1000ms (1 detik)
+end
+
+local function validateAndSetAnimationDelay(input)
+    local msValue = validateMsInput(input, 0, 1000, 20) -- Maks 1000ms (1 detik)
+    animationPartDelay = msValue / 1000
+end
+------------------------------------
+
+--- PART CREATION FUNCTION ---
+local function createBlockPart(position, isAudioMode)
+    local part = Instance.new("Part")
+    part.Size = Vector3.new(1, 1, 1) * blockPartsSizeMultiplier
+    part.Material = Enum.Material.Neon
+    part.BrickColor = BrickColor.new("Bright blue")
+    part.Anchored = true
+    part.CanCollide = false
+    part.Transparency = 0.7
+    part.CFrame = CFrame.new(position)
+    
+    -- Tentukan delay berdasarkan mode
+    local delayTime
+    if isAudioMode then
+        delayTime = audioPartDelayMs / 1000 -- Konversi ms ke detik
+    else
+        delayTime = animationPartDelay
+    end
+    
+    -- Spawn dengan delay yang sesuai
+    if delayTime > 0 then
+        task.spawn(function()
+            task.wait(delayTime)
+            if part and part.Parent == nil then
+                part.Parent = workspace
+                Debris:AddItem(part, 1)
+            end
+        end)
+    else
+        part.Parent = workspace
+        Debris:AddItem(part, 1)
+    end
+    
+    return part
+end
+--------------------------------
 
 -- Di dalam fungsi yang menangani Auto Block Audio (biasanya di bagian audio detection)
 --- AUTO BLOCK AUDIO HANDLER ---
@@ -972,36 +1033,117 @@ BDTab:CreateInput({
 })
 
 
--- Di dalam BDTab (Better Detection tab)
 --- AUDIO PART DELAY CONTROLS ---
-BDTab:CreateSlider({
+BDTab:CreateInput({
     Name = "Audio Part Delay (ms)",
-    Range = {0, 500}, -- 0-500 milidetik
-    Increment = 1,
-    Suffix = "ms",
-    CurrentValue = 20,
+    PlaceholderText = "20",
+    RemoveTextAfterFocusLost = false,
     Flag = "AudioPartDelayMs",
-    Callback = function(val)
-        audioPartDelayMs = val
+    Callback = function(Text)
+        local oldValue = audioPartDelayMs
+        validateAndSetAudioDelay(Text)
+        
+        -- Notifikasi perubahan
+        if oldValue ~= audioPartDelayMs then
+            StarterGui:SetCore("SendNotification", {
+                Title = "Audio Delay Updated",
+                Text = "Set to " .. audioPartDelayMs .. "ms",
+                Duration = 1
+            })
+        end
     end,
 })
 
-BDTab:CreateSlider({
+BDTab:CreateInput({
     Name = "Animation Part Delay (ms)",
-    Range = {0, 100}, -- 0-100 milidetik
-    Increment = 1,
-    Suffix = "ms",
-    CurrentValue = 20,
+    PlaceholderText = "20",
+    RemoveTextAfterFocusLost = false,
     Flag = "AnimationPartDelayMs",
-    Callback = function(val)
-        animationPartDelay = val / 1000 -- Konversi ke detik
+    Callback = function(Text)
+        local oldValue = animationPartDelay * 1000
+        validateAndSetAnimationDelay(Text)
+        
+        -- Notifikasi perubahan
+        if oldValue ~= (animationPartDelay * 1000) then
+            StarterGui:SetCore("SendNotification", {
+                Title = "Animation Delay Updated",
+                Text = "Set to " .. math.floor(animationPartDelay * 1000) .. "ms",
+                Duration = 1
+            })
+        end
     end,
 })
 ------------------------------------
 
+BDTab:CreateButton({
+    Name = "Reset All Delays to Default",
+    Callback = function()
+        audioPartDelayMs = 20
+        animationPartDelay = 0.02
+        
+        StarterGui:SetCore("SendNotification", {
+            Title = "Delay Reset",
+            Text = "All delays reset to default (20ms)",
+            Duration = 2
+        })
+    end,
+})
+
+BDTab:CreateButton({
+    Name = "Set to 100ms (0.1 detik)",
+    Callback = function()
+        audioPartDelayMs = 100
+        animationPartDelay = 0.1
+        
+        StarterGui:SetCore("SendNotification", {
+            Title = "Delay Set",
+            Text = "Both delays set to 100ms",
+            Duration = 2
+        })
+    end,
+})
+
+BDTab:CreateButton({
+    Name = "Set to 500ms (0.5 detik)",
+    Callback = function()
+        audioPartDelayMs = 500
+        animationPartDelay = 0.5
+        
+        StarterGui:SetCore("SendNotification", {
+            Title = "Delay Set",
+            Text = "Both delays set to 500ms",
+            Duration = 2
+        })
+    end,
+})
+
+BDTab:CreateButton({
+    Name = "Set to 1000ms (1 detik)",
+    Callback = function()
+        audioPartDelayMs = 1000
+        animationPartDelay = 1.0
+        
+        StarterGui:SetCore("SendNotification", {
+            Title = "Delay Set",
+            Text = "Both delays set to 1000ms (1 detik)",
+            Duration = 2
+        })
+    end,
+})
+
 BDTab:CreateParagraph({
     Title = "Part Delay Control",
-    Content = "Audio Part Delay hanya berlaku untuk Auto Block Audio. Animation Part Delay hanya berlaku untuk Auto Block Animation."
+    Content = "• Audio Part Delay: 0-1000ms (0-1 detik) untuk Auto Block Audio\n• Animation Part Delay: 0-1000ms (0-1 detik) untuk Auto Block Animation\n• Ketik angka saja, otomatis divalidasi"
+})
+
+BDTab:CreateParagraph({
+    Title = "Contoh Penggunaan",
+    Content = "• Ketik '15' untuk 15 milidetik\n• Ketik '500' untuk 0.5 detik\n• Ketik '1000' untuk 1 detik (maksimal)\n• Ketik '0' untuk tanpa delay"
+})
+
+BDTab:CreateParagraph({
+    Title = "Catatan",
+    Content = "• Nilai di atas 1000ms akan otomatis dibatasi menjadi 1000ms\n• 1000ms = 1 detik"
 })
 
 
@@ -1629,7 +1771,25 @@ local args = {"UseActorAbility", "Punch"}
 ReplicatedStorage:WaitForChild("Modules"):WaitForChild("Network"):WaitForChild("RemoteEvent"):FireServer(unpack(args))
 end
 
-
+--- INTEGRASI DI LOOP UTAMA ---
+RunService.RenderStepped:Connect(function()
+    -- Deteksi Audio
+    if autoBlockAudioOn then
+        -- ... logika deteksi audio Anda ...
+        if audioDetected then
+            handleAudioBlock()
+        end
+    end
+    
+    -- Deteksi Animasi
+    if autoBlockOn then
+        -- ... logika deteksi animasi Anda ...
+        if animDetected then
+            handleAnimationBlock()
+        end
+    end
+end)
+--------------------------------
 
 
 -- Push *into* the killer (drops in for doLegitBlockTP_withVelocity)
