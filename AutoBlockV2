@@ -912,31 +912,6 @@ BDTab:CreateInput({
     end,
 })
 
--- Tambahkan fitur baru di sini
-local firstPartDelayMs = 0  -- Default delay untuk part pertama dalam milidetik
-local waitForFirstPart = true  -- Menunggu part pertama muncul sebelum melanjutkan ke parts lainnya
-
-BDTab:CreateSlider({
-    Name = "First Part Delay (milliseconds)",
-    Range = {0, 1000},  -- 0 hingga 1000 milidetik (1 detik)
-    Increment = 10,      -- Kenaikan 10 milidetik
-    Suffix = "ms",
-    CurrentValue = 0,
-    Flag = "FirstPartDelayMs",
-    Callback = function(val)
-        firstPartDelayMs = val
-    end,
-})
-
-BDTab:CreateToggle({
-    Name = "Wait For First Part",
-    CurrentValue = true,
-    Flag = "WaitForFirstPart",
-    Callback = function(val)
-        waitForFirstPart = val
-    end,
-})
-
 TechTab:CreateToggle({
     Name = "Double Punch Tech",
     CurrentValue = false,
@@ -1547,90 +1522,7 @@ local args = {"UseActorAbility", "Punch"}
 ReplicatedStorage:WaitForChild("Modules"):WaitForChild("Network"):WaitForChild("RemoteEvent"):FireServer(unpack(args))
 end
 
--- Fungsi untuk membuat anti-flick parts dengan fitur baru
-local function createAntiFlickParts(killerHrp)
-    local parts = {}
-    local firstPartCreated = false
-    
-    -- Fungsi untuk membuat satu bagian
-    local function createSinglePart(offset)
-        local part = Instance.new("Part")
-        part.Size = Vector3.new(3 * blockPartsSizeMultiplier, 3 * blockPartsSizeMultiplier, 1 * blockPartsSizeMultiplier)
-        part.CFrame = killerHrp.CFrame * CFrame.new(0, 0, -offset)
-        part.Anchored = true
-        part.CanCollide = false
-        part.Material = Enum.Material.Neon
-        part.Color = Color3.fromRGB(0, 162, 255)
-        part.Transparency = 0.7
-        part.Parent = workspace
-        
-        -- Hapus bagian setelah beberapa waktu
-        game:GetService("Debris"):AddItem(part, 1)
-        
-        return part
-    end
-    
-    -- Membuat bagian pertama dengan delay dalam milidetik
-    if firstPartDelayMs > 0 then
-        spawn(function()
-            -- Konversi milidetik ke detik untuk fungsi wait()
-            wait(firstPartDelayMs / 1000)
-            parts[1] = createSinglePart(antiFlickBaseOffset)
-            firstPartCreated = true
-        end)
-    else
-        parts[1] = createSinglePart(antiFlickBaseOffset)
-        firstPartCreated = true
-    end
-    
-    -- Membuat bagian-bagian lainnya
-    spawn(function()
-        -- Jika perlu menunggu bagian pertama
-        if waitForFirstPart then
-            while not firstPartCreated do
-                wait()
-            end
-        end
-        
-        -- Buat bagian-bagian lainnya
-        for i = 2, antiFlickParts do
-            local offset = antiFlickBaseOffset + (i - 1) * antiFlickOffsetStep
-            parts[i] = createSinglePart(offset)
-            
-            -- Jika ada stagger antar bagian
-            if stagger > 0 then
-                wait(stagger)
-            end
-        end
-    end)
-    
-    return parts
-end
 
--- Implementasi anti-flick dengan fungsi baru
-RunService.Heartbeat:Connect(function()
-    if antiFlickOn then
-        local char = lp.Character
-        if not char then return end
-        
-        local myHRP = char:FindFirstChild("HumanoidRootPart")
-        if not myHRP then return end
-        
-        for _, killer in pairs(KillersFolder:GetChildren()) do
-            local killerHRP = killer:FindFirstChild("HumanoidRootPart")
-            if killerHRP then
-                local dist = (killerHRP.Position - myHRP.Position).Magnitude
-                if dist <= detectionRange then
-                    -- Cek facing
-                    if isFacing(myHRP, killerHRP) then
-                        -- Gunakan fungsi baru untuk membuat anti-flick parts
-                        createAntiFlickParts(killerHRP)
-                    end
-                end
-            end
-        end
-    end
-end)
 
 
 -- Push *into* the killer (drops in for doLegitBlockTP_withVelocity)
