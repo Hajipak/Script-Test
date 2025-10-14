@@ -112,6 +112,8 @@ local Debris = game:GetService("Debris")
 local antiFlickOn = false
 -- how many anti-flick parts to spawn (default 4)
 local antiFlickParts = 4
+aulocaldioPartDelayMs = 20
+local animationPartDelay = 0.02
 
 -- optional: base distance in front of killer for the first part
 local antiFlickBaseOffset = 2.7
@@ -248,6 +250,42 @@ lp.CharacterAdded:Connect(function(char)
     task.wait(0.5) -- allow Humanoid/Animator to be created
     refreshAnimator()
 end)
+
+-- Di dalam fungsi yang menangani Auto Block Audio (biasanya di bagian audio detection)
+--- AUTO BLOCK AUDIO HANDLER ---
+local function handleAudioBlock()
+    -- ... deteksi suara ...
+    
+    if autoBlockAudioOn then
+        -- Buat part dengan delay khusus audio
+        for i = 1, antiFlickParts do
+            local offset = antiFlickBaseOffset + (i-1) * antiFlickOffsetStep
+            local partPos = killerPosition + killerDirection * offset
+            createBlockPart(partPos, true) -- true = mode audio
+        end
+        
+        -- ... eksekusi block ...
+    end
+end
+--------------------------------
+
+-- Di dalam fungsi yang menangani Auto Block Animation
+--- AUTO BLOCK ANIMATION HANDLER ---
+local function handleAnimationBlock()
+    -- ... deteksi animasi ...
+    
+    if autoBlockOn then
+        -- Buat part tanpa delay (delay default)
+        for i = 1, antiFlickParts do
+            local offset = antiFlickBaseOffset + (i-1) * antiFlickOffsetStep
+            local partPos = killerPosition + killerDirection * offset
+            createBlockPart(partPos, false) -- false = mode animasi
+        end
+        
+        -- ... eksekusi block ...
+    end
+end
+--------------------------------
 
 -- ===== performance improvements for Sound Auto Block =====
 -- cached UI / refs
@@ -849,6 +887,42 @@ RunService.Heartbeat:Connect(function(dt)
     applyDelayForKillerModel(nearest)
 end)
 
+--- PART CREATION FUNCTION ---
+local function createBlockPart(position, isAudioMode)
+    local part = Instance.new("Part")
+    part.Size = Vector3.new(1, 1, 1) * blockPartsSizeMultiplier
+    part.Material = Enum.Material.Neon
+    part.BrickColor = BrickColor.new("Bright blue")
+    part.Anchored = true
+    part.CanCollide = false
+    part.Transparency = 0.7
+    part.CFrame = CFrame.new(position)
+    
+    -- Tentukan delay berdasarkan mode
+    local delayTime
+    if isAudioMode then
+        delayTime = audioPartDelayMs / 1000 -- Konversi ms ke detik
+    else
+        delayTime = animationPartDelay
+    end
+    
+    -- Spawn dengan delay yang sesuai
+    if delayTime > 0 then
+        task.spawn(function()
+            task.wait(delayTime)
+            if part and part.Parent == nil then
+                part.Parent = workspace
+                Debris:AddItem(part, 1)
+            end
+        end)
+    else
+        part.Parent = workspace
+        Debris:AddItem(part, 1)
+    end
+    
+    return part
+end
+
 -- immediate update helper when killers spawn/leave or user toggles
 local function doImmediateUpdate()
     if not autoAdjustDBTFBPS then return end
@@ -895,6 +969,39 @@ BDTab:CreateInput({
             stagger = math.max(0, num) -- donâ€™t allow negative
         end
     end,
+})
+
+
+-- Di dalam BDTab (Better Detection tab)
+--- AUDIO PART DELAY CONTROLS ---
+BDTab:CreateSlider({
+    Name = "Audio Part Delay (ms)",
+    Range = {0, 500}, -- 0-500 milidetik
+    Increment = 1,
+    Suffix = "ms",
+    CurrentValue = 20,
+    Flag = "AudioPartDelayMs",
+    Callback = function(val)
+        audioPartDelayMs = val
+    end,
+})
+
+BDTab:CreateSlider({
+    Name = "Animation Part Delay (ms)",
+    Range = {0, 100}, -- 0-100 milidetik
+    Increment = 1,
+    Suffix = "ms",
+    CurrentValue = 20,
+    Flag = "AnimationPartDelayMs",
+    Callback = function(val)
+        animationPartDelay = val / 1000 -- Konversi ke detik
+    end,
+})
+------------------------------------
+
+BDTab:CreateParagraph({
+    Title = "Part Delay Control",
+    Content = "Audio Part Delay hanya berlaku untuk Auto Block Audio. Animation Part Delay hanya berlaku untuk Auto Block Animation."
 })
 
 
