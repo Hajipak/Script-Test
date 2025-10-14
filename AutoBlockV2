@@ -111,6 +111,7 @@ local Debris = game:GetService("Debris")
 --- AUDIO PART DELAY SETTINGS ---
 local audioPartDelayMs = 20        -- Delay part untuk Auto Block Audio (milidetik)
 local animationPartDelay = 0.02     -- Delay part untuk Auto Block Animation (detik)
+local firstPartDelayMs = 20         -- Delay untuk part pertama di Better Detection (milidetik)
 ------------------------------------
 -- Anti-flick toggle state
 local antiFlickOn = false
@@ -276,7 +277,7 @@ end
 ------------------------------------
 
 --- PART CREATION FUNCTION ---
-local function createBlockPart(position, isAudioMode)
+local function createBlockPart(position, isAudioMode, isFirstPart, isBetterDetection)
     local part = Instance.new("Part")
     part.Size = Vector3.new(1, 1, 1) * blockPartsSizeMultiplier
     part.Material = Enum.Material.Neon
@@ -288,13 +289,16 @@ local function createBlockPart(position, isAudioMode)
     
     -- Tentukan delay berdasarkan mode
     local delayTime
-    if isAudioMode then
+    if isBetterDetection then
+        -- Untuk Better Detection, gunakan firstPartDelayMs hanya untuk part pertama
+        delayTime = isFirstPart and (firstPartDelayMs / 1000) or 0
+    elseif isAudioMode then
         delayTime = audioPartDelayMs / 1000 -- Konversi ms ke detik
     else
         delayTime = animationPartDelay
     end
     
-    -- Spawn dengan delay yang sesuai
+    -- Spawn dengan delay jika ada
     if delayTime > 0 then
         task.spawn(function()
             task.wait(delayTime)
@@ -304,13 +308,13 @@ local function createBlockPart(position, isAudioMode)
             end
         end)
     else
+        -- Langsung muncul tanpa delay
         part.Parent = workspace
         Debris:AddItem(part, 1)
     end
     
     return part
 end
---------------------------------
 
 -- Di dalam fungsi yang menangani Auto Block Audio (biasanya di bagian audio detection)
 --- AUTO BLOCK AUDIO HANDLER ---
@@ -347,6 +351,27 @@ local function handleAnimationBlock()
     end
 end
 --------------------------------
+
+-- Di bagian script yang menangani Better Detection (biasanya di RenderStepped atau heartbeat)
+local function handleBetterDetection(killerPosition, killerDirection)
+    if antiFlickOn then
+        -- Buat beberapa part dengan delay hanya pada part pertama
+        for i = 1, antiFlickParts do
+            local offset = antiFlickBaseOffset + (i-1) * antiFlickOffsetStep
+            local partPos = killerPosition + killerDirection * offset
+            
+            -- Hanya part pertama (i == 1) yang diberi delay
+            createBlockPart(partPos, false, i == 1, true) -- false = bukan mode audio, i == 1 = part pertama, true = Better Detection mode
+            
+            -- Jika ada stagger delay antar part (kecuali untuk part pertama yang sudah ada delay)
+            if i > 1 and stagger > 0 then
+                task.wait(stagger)
+            end
+        end
+        
+        -- ... eksekusi block ...
+    end
+end
 
 -- ===== performance improvements for Sound Auto Block =====
 -- cached UI / refs
@@ -882,7 +907,7 @@ BDTab:CreateInput({
     Callback = function(text)
         local num = tonumber(text)
         if num then
-            antiFlickDelay = math.max(0, num) -- donâ€™t allow negative
+            antiFlickDelay = math.max(0, num) -- donÃ¢â‚¬â„¢t allow negative
         end
     end,
 })
@@ -1027,125 +1052,46 @@ BDTab:CreateInput({
     Callback = function(text)
         local num = tonumber(text)
         if num then
-            stagger = math.max(0, num) -- donâ€™t allow negative
+            stagger = math.max(0, num) -- donÃ¢â‚¬â„¢t allow negative
         end
     end,
 })
 
 
---- AUDIO PART DELAY CONTROLS ---
+-- Tambahkan ini di BDTab setelah slider "How many block parts that spawn"
 BDTab:CreateInput({
-    Name = "Audio Part Delay (ms)",
+    Name = "First Part Delay (ms)",
     PlaceholderText = "20",
     RemoveTextAfterFocusLost = false,
-    Flag = "AudioPartDelayMs",
+    Flag = "FirstPartDelayMs",
     Callback = function(Text)
-        local oldValue = audioPartDelayMs
-        validateAndSetAudioDelay(Text)
+        local oldValue = firstPartDelayMs
+        firstPartDelayMs = validateMsInput(Text, 0, 1000, 20) -- Validasi input 0-1000ms, default 20ms
         
         -- Notifikasi perubahan
-        if oldValue ~= audioPartDelayMs then
+        if oldValue ~= firstPartDelayMs then
             StarterGui:SetCore("SendNotification", {
-                Title = "Audio Delay Updated",
-                Text = "Set to " .. audioPartDelayMs .. "ms",
+                Title = "First Part Delay Updated",
+                Text = "Set to " .. firstPartDelayMs .. "ms",
                 Duration = 1
             })
         end
     end,
 })
 
-BDTab:CreateInput({
-    Name = "Animation Part Delay (ms)",
-    PlaceholderText = "20",
-    RemoveTextAfterFocusLost = false,
-    Flag = "AnimationPartDelayMs",
-    Callback = function(Text)
-        local oldValue = animationPartDelay * 1000
-        validateAndSetAnimationDelay(Text)
-        
-        -- Notifikasi perubahan
-        if oldValue ~= (animationPartDelay * 1000) then
-            StarterGui:SetCore("SendNotification", {
-                Title = "Animation Delay Updated",
-                Text = "Set to " .. math.floor(animationPartDelay * 1000) .. "ms",
-                Duration = 1
-            })
-        end
-    end,
-})
-------------------------------------
-
+-- Tambahkan tombol reset di BDTab
 BDTab:CreateButton({
-    Name = "Reset All Delays to Default",
+    Name = "Reset First Part Delay",
     Callback = function()
-        audioPartDelayMs = 20
-        animationPartDelay = 0.02
+        firstPartDelayMs = 20
         
         StarterGui:SetCore("SendNotification", {
-            Title = "Delay Reset",
-            Text = "All delays reset to default (20ms)",
+            Title = "First Part Delay Reset",
+            Text = "Delay reset to default (20ms)",
             Duration = 2
         })
     end,
 })
-
-BDTab:CreateButton({
-    Name = "Set to 100ms (0.1 detik)",
-    Callback = function()
-        audioPartDelayMs = 100
-        animationPartDelay = 0.1
-        
-        StarterGui:SetCore("SendNotification", {
-            Title = "Delay Set",
-            Text = "Both delays set to 100ms",
-            Duration = 2
-        })
-    end,
-})
-
-BDTab:CreateButton({
-    Name = "Set to 500ms (0.5 detik)",
-    Callback = function()
-        audioPartDelayMs = 500
-        animationPartDelay = 0.5
-        
-        StarterGui:SetCore("SendNotification", {
-            Title = "Delay Set",
-            Text = "Both delays set to 500ms",
-            Duration = 2
-        })
-    end,
-})
-
-BDTab:CreateButton({
-    Name = "Set to 1000ms (1 detik)",
-    Callback = function()
-        audioPartDelayMs = 1000
-        animationPartDelay = 1.0
-        
-        StarterGui:SetCore("SendNotification", {
-            Title = "Delay Set",
-            Text = "Both delays set to 1000ms (1 detik)",
-            Duration = 2
-        })
-    end,
-})
-
-BDTab:CreateParagraph({
-    Title = "Part Delay Control",
-    Content = "• Audio Part Delay: 0-1000ms (0-1 detik) untuk Auto Block Audio\n• Animation Part Delay: 0-1000ms (0-1 detik) untuk Auto Block Animation\n• Ketik angka saja, otomatis divalidasi"
-})
-
-BDTab:CreateParagraph({
-    Title = "Contoh Penggunaan",
-    Content = "• Ketik '15' untuk 15 milidetik\n• Ketik '500' untuk 0.5 detik\n• Ketik '1000' untuk 1 detik (maksimal)\n• Ketik '0' untuk tanpa delay"
-})
-
-BDTab:CreateParagraph({
-    Title = "Catatan",
-    Content = "• Nilai di atas 1000ms akan otomatis dibatasi menjadi 1000ms\n• 1000ms = 1 detik"
-})
-
 
 
 BDTab:CreateInput({
@@ -1156,7 +1102,7 @@ BDTab:CreateInput({
     Callback = function(text)
         local num = tonumber(text)
         if num then
-            antiFlickBaseOffset = math.max(0, num) -- donâ€™t allow negative
+            antiFlickBaseOffset = math.max(0, num) -- donÃ¢â‚¬â„¢t allow negative
         end
     end,
 })
@@ -1279,11 +1225,11 @@ FakeBlockTab:CreateButton({
                     return loadstring(game:HttpGet("https://raw.githubusercontent.com/skibidi399/Auto-block-script/refs/heads/main/fakeblock"))()
                 end)
                 if not success then
-                    warn("âŒ Failed to load Fake Block GUI:", result)
+                    warn("Ã¢ÂÅ’ Failed to load Fake Block GUI:", result)
                 end
             else
                 fakeGui.Enabled = true
-                print("âœ… Fake Block GUI enabled")
+                print("Ã¢Å“â€¦ Fake Block GUI enabled")
             end
         end)
     end
@@ -1663,7 +1609,7 @@ local function addESP(obj)
     if not obj:FindFirstChild("HumanoidRootPart") then return end
 
     local plr = Players:GetPlayerFromCharacter(obj)
-    if not plr then return end -- âœ… only add ESP if it's a player character
+    if not plr then return end -- Ã¢Å“â€¦ only add ESP if it's a player character
 
     -- Prevent duplicates
     if obj:FindFirstChild("ESP_Highlight") then return end
@@ -1828,7 +1774,7 @@ local function playCustomAnim(animId, isPunch)
     end)
 
     if success and track then
-        print("âœ… Playing custom " .. (isPunch and "punch" or "block") .. " animation:", animId)
+        print("Ã¢Å“â€¦ Playing custom " .. (isPunch and "punch" or "block") .. " animation:", animId)
         track:Play()
         if isPunch then
             lastPunchTime = now
@@ -1836,7 +1782,7 @@ local function playCustomAnim(animId, isPunch)
             lastBlockTime = now
         end
     else
-        warn("âŒ Failed to load or play custom animation: " .. animId)
+        warn("Ã¢ÂÅ’ Failed to load or play custom animation: " .. animId)
     end
 end
 
