@@ -109,6 +109,7 @@ local messageWhenAutoBlock = ""
 local autoBlockAudioDelay = 0
 local autoBlockAudioBDDelay = 0
 local nextAudioBlockTime = 0
+local nextBDDelayTime = 0
 -- local fasterAudioAB = false (this is scrapped. im too lazy to remove it)
 local Debris = game:GetService("Debris")
 -- Anti-flick toggle state
@@ -334,20 +335,6 @@ AutoBlockTab:CreateInput({
         if num then
             autoBlockAudioDelay = math.max(0, num)
             print("Audio delay (no BD):", autoBlockAudioDelay)
-        end
-    end,
-})
-
-AutoBlockTab:CreateInput({
-    Name = "Audio Delay (with BD)",
-    PlaceholderText = "0",
-    RemoveTextAfterFocusLost = false,
-    Flag = "AutoBlockAudioDelayBD",
-    Callback = function(text)
-        local num = tonumber(text)
-        if num then
-            autoBlockAudioBDDelay = math.max(0, num)
-            print("Audio delay (with BD):", autoBlockAudioBDDelay)
         end
     end,
 })
@@ -939,6 +926,20 @@ BDTab:CreateInput({
         local num = tonumber(text)
         if num then
             antiFlickBaseOffset = math.max(0, num) -- donÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢t allow negative
+        end
+    end,
+})
+
+BDTab:CreateInput({
+    Name = "Audio Delay (With BD)",
+    PlaceholderText = "0",
+    RemoveTextAfterFocusLost = false,
+    Flag = "AutoBlockAudioBDDelay",
+    Callback = function(text)
+        local num = tonumber(text)
+        if num then
+            autoBlockAudioBDDelay = math.max(0, num)
+            print("AutoBlock Audio Delay (With BD):", autoBlockAudioBDDelay)
         end
     end,
 })
@@ -2080,13 +2081,21 @@ local function _attemptForSound(sound, idParam, mode)
         chosenDelay = autoBlockAudioDelay or 0
     end
 
+    -- Cegah spam block dan buat delay real-time
     if now >= nextAudioBlockTime then
         nextAudioBlockTime = now + chosenDelay
         task.spawn(function()
-            task.wait(chosenDelay)
+            if chosenDelay > 0 then
+                local startTime = tick()
+                while tick() - startTime < chosenDelay do
+                    task.wait()
+                    -- Bisa ditambahkan efek indikator visual di sini kalau mau
+                end
+            end
             fireGuiBlock()
         end)
     end
+end
     elseif mode == "Charge" then
         if cachedChargeBtn and cachedChargeBtn:FindFirstChild("CooldownTime") and cachedChargeBtn.CooldownTime.Text == "" then
             print("yay")
