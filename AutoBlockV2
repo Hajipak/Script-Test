@@ -326,15 +326,15 @@ AutoBlockTab:CreateToggle({
 })
 
 AutoBlockTab:CreateInput({
-    Name = "Audio Delay (no BD)",
+    Name = "Audio Delay (No BD)",
     PlaceholderText = "0",
     RemoveTextAfterFocusLost = false,
-    Flag = "AutoBlockAudioDelayNormal",
+    Flag = "AutoBlockAudioDelay",
     Callback = function(text)
         local num = tonumber(text)
         if num then
             autoBlockAudioDelay = math.max(0, num)
-            print("Audio delay (no BD):", autoBlockAudioDelay)
+            print("AutoBlock Audio Delay (No BD):", autoBlockAudioDelay)
         end
     end,
 })
