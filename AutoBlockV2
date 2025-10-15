@@ -142,7 +142,7 @@ local _savedManualAntiFlickDelay = antiFlickDelay or 0 -- keep user's manual val
 
 -- map of killer name (lowercase) -> antiFlickDelay value you requested
 local killerDelayMap = {
-    ["c00lkidd"] = 1,
+    ["c00lkidd"] = 0,
     ["jason"]    = 0.013,
     ["slasher"]  = 0.01,
     ["1x1x1x1"]  = 0.15,
@@ -353,13 +353,17 @@ AutoBlockTab:CreateParagraph({
 
 AutoBlockTab:CreateInput({
     Name = "Auto Block Audio Delay (seconds)",
-    PlaceholderText = "0",
+    PlaceholderText = "0.25",
     RemoveTextAfterFocusLost = false,
     Flag = "AutoBlockAudioDelay",
     Callback = function(Text)
         local num = tonumber(Text)
-        if num then
-            autoBlockAudioDelay = math.max(0, num) -- tidak boleh negatif
+        if num and num >= 0 then
+            autoBlockAudioDelay = num
+            Rayfield.Flags["AutoBlockAudioDelay"].CurrentValue = num
+        else
+            autoBlockAudioDelay = 0
+            Rayfield.Flags["AutoBlockAudioDelay"].CurrentValue = 0
         end
     end,
 })
@@ -2054,10 +2058,15 @@ local function _attemptForSound(sound, idParam, mode)
 
     -- mode-specific extra checks & actions (preserve prints and exact calls)
     if mode == "Block" then
-    if autoBlockAudioDelay > 0 then
-        task.wait(autoBlockAudioDelay)
+    local delayValue = Rayfield.Flags["AutoBlockAudioDelay"]
+        and tonumber(Rayfield.Flags["AutoBlockAudioDelay"].CurrentValue)
+        or autoBlockAudioDelay or 0
+
+    if delayValue > 0 then
+        task.wait(delayValue)
     end
     fireGuiBlock()
+end
     elseif mode == "Charge" then
         if cachedChargeBtn and cachedChargeBtn:FindFirstChild("CooldownTime") and cachedChargeBtn.CooldownTime.Text == "" then
             print("yay")
