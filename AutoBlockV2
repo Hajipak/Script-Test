@@ -109,7 +109,6 @@ local messageWhenAutoBlock = ""
 local autoBlockAudioDelay = 0
 local autoBlockAudioBDDelay = 0
 local nextAudioBlockTime = 0
-local nextBDDelayTime = 0
 -- local fasterAudioAB = false (this is scrapped. im too lazy to remove it)
 local Debris = game:GetService("Debris")
 -- Anti-flick toggle state
@@ -326,15 +325,29 @@ AutoBlockTab:CreateToggle({
 })
 
 AutoBlockTab:CreateInput({
-    Name = "Audio Delay (No BD)",
+    Name = "Audio Delay (no BD)",
     PlaceholderText = "0",
     RemoveTextAfterFocusLost = false,
-    Flag = "AutoBlockAudioDelay",
+    Flag = "AutoBlockAudioDelayNormal",
     Callback = function(text)
         local num = tonumber(text)
         if num then
             autoBlockAudioDelay = math.max(0, num)
-            print("AutoBlock Audio Delay (No BD):", autoBlockAudioDelay)
+            print("Audio delay (no BD):", autoBlockAudioDelay)
+        end
+    end,
+})
+
+AutoBlockTab:CreateInput({
+    Name = "Audio Delay (with BD)",
+    PlaceholderText = "0",
+    RemoveTextAfterFocusLost = false,
+    Flag = "AutoBlockAudioDelayBD",
+    Callback = function(text)
+        local num = tonumber(text)
+        if num then
+            autoBlockAudioBDDelay = math.max(0, num)
+            print("Audio delay (with BD):", autoBlockAudioBDDelay)
         end
     end,
 })
@@ -801,7 +814,7 @@ BDTab:CreateInput({
     Callback = function(text)
         local num = tonumber(text)
         if num then
-            antiFlickDelay = math.max(0, num) -- donÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢t allow negative
+            antiFlickDelay = math.max(0, num) -- donÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢t allow negative
         end
     end,
 })
@@ -910,7 +923,7 @@ BDTab:CreateInput({
     Callback = function(text)
         local num = tonumber(text)
         if num then
-            stagger = math.max(0, num) -- donÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢t allow negative
+            stagger = math.max(0, num) -- donÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢t allow negative
         end
     end,
 })
@@ -925,21 +938,7 @@ BDTab:CreateInput({
     Callback = function(text)
         local num = tonumber(text)
         if num then
-            antiFlickBaseOffset = math.max(0, num) -- donÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢t allow negative
-        end
-    end,
-})
-
-BDTab:CreateInput({
-    Name = "Audio Delay (With BD)",
-    PlaceholderText = "0",
-    RemoveTextAfterFocusLost = false,
-    Flag = "AutoBlockAudioBDDelay",
-    Callback = function(text)
-        local num = tonumber(text)
-        if num then
-            autoBlockAudioBDDelay = math.max(0, num)
-            print("AutoBlock Audio Delay (With BD):", autoBlockAudioBDDelay)
+            antiFlickBaseOffset = math.max(0, num) -- donÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢t allow negative
         end
     end,
 })
@@ -1062,11 +1061,11 @@ FakeBlockTab:CreateButton({
                     return loadstring(game:HttpGet("https://raw.githubusercontent.com/skibidi399/Auto-block-script/refs/heads/main/fakeblock"))()
                 end)
                 if not success then
-                    warn("ÃƒÂ¢Ã‚ÂÃ…â€™ Failed to load Fake Block GUI:", result)
+                    warn("ÃƒÆ’Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒâ€¦Ã¢â‚¬â„¢ Failed to load Fake Block GUI:", result)
                 end
             else
                 fakeGui.Enabled = true
-                print("ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ Fake Block GUI enabled")
+                print("ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã¢â‚¬Å“ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ Fake Block GUI enabled")
             end
         end)
     end
@@ -1446,7 +1445,7 @@ local function addESP(obj)
     if not obj:FindFirstChild("HumanoidRootPart") then return end
 
     local plr = Players:GetPlayerFromCharacter(obj)
-    if not plr then return end -- ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ only add ESP if it's a player character
+    if not plr then return end -- ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã¢â‚¬Å“ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ only add ESP if it's a player character
 
     -- Prevent duplicates
     if obj:FindFirstChild("ESP_Highlight") then return end
@@ -1593,7 +1592,7 @@ local function playCustomAnim(animId, isPunch)
     end)
 
     if success and track then
-        print("ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ Playing custom " .. (isPunch and "punch" or "block") .. " animation:", animId)
+        print("ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã¢â‚¬Å“ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ Playing custom " .. (isPunch and "punch" or "block") .. " animation:", animId)
         track:Play()
         if isPunch then
             lastPunchTime = now
@@ -1601,7 +1600,7 @@ local function playCustomAnim(animId, isPunch)
             lastBlockTime = now
         end
     else
-        warn("ÃƒÂ¢Ã‚ÂÃ…â€™ Failed to load or play custom animation: " .. animId)
+        warn("ÃƒÆ’Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒâ€¦Ã¢â‚¬â„¢ Failed to load or play custom animation: " .. animId)
     end
 end
 
@@ -2072,29 +2071,21 @@ local function _attemptForSound(sound, idParam, mode)
 
     -- mode-specific extra checks & actions (preserve prints and exact calls)
     if mode == "Block" then
-        local now = tick()
-        local chosenDelay = 0
+    local now = tick()
+    local chosenDelay = 0
 
-        if antiFlickOn then
-            chosenDelay = autoBlockAudioBDDelay or 0
-        else
-            chosenDelay = autoBlockAudioDelay or 0
-        end
+    if antiFlickOn then
+        chosenDelay = autoBlockAudioBDDelay or 0
+    else
+        chosenDelay = autoBlockAudioDelay or 0
+    end
 
-        -- Cegah spam block dan buat delay real-time
-        if now >= nextAudioBlockTime then
-            nextAudioBlockTime = now + chosenDelay
-            task.spawn(function()
-                if chosenDelay > 0 then
-                    local startTime = tick()
-                    while tick() - startTime < chosenDelay do
-                        task.wait()
-                        -- Bisa ditambahkan efek indikator visual di sini kalau mau
-                    end
-                end
-                fireGuiBlock()
-            end)
-        end
+    if now >= nextAudioBlockTime then
+        nextAudioBlockTime = now + chosenDelay
+        task.spawn(function()
+            task.wait(chosenDelay)
+            fireGuiBlock()
+        end)
     end
     elseif mode == "Charge" then
         if cachedChargeBtn and cachedChargeBtn:FindFirstChild("CooldownTime") and cachedChargeBtn.CooldownTime.Text == "" then
