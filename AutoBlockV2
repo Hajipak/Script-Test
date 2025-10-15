@@ -101,6 +101,7 @@ local autoBlockTriggerAnims = {
 -- State Variables
 local autoBlockOn = false
 local autoBlockAudioOn = false
+local autoBlockAudioDelay = 0
 local doubleblocktech = false
 local looseFacing = true
 local detectionRange = 18
@@ -348,6 +349,19 @@ AutoBlockTab:CreateKeybind({
 AutoBlockTab:CreateParagraph({
     Title = "Controller Keybind",
     Content = "Use the keybind above to toggle Auto Block Audio with your controller."
+})
+
+AutoBlockTab:CreateInput({
+    Name = "Auto Block Audio Delay (seconds)",
+    PlaceholderText = "0",
+    RemoveTextAfterFocusLost = false,
+    Flag = "AutoBlockAudioDelay",
+    Callback = function(Text)
+        local num = tonumber(Text)
+        if num then
+            autoBlockAudioDelay = math.max(0, num) -- tidak boleh negatif
+        end
+    end,
 })
 
 -- make sure AutoBlockTab is a valid Rayfield tab object
@@ -2040,7 +2054,10 @@ local function _attemptForSound(sound, idParam, mode)
 
     -- mode-specific extra checks & actions (preserve prints and exact calls)
     if mode == "Block" then
-        fireGuiBlock()
+    if autoBlockAudioDelay > 0 then
+        task.wait(autoBlockAudioDelay)
+    end
+    fireGuiBlock()
     elseif mode == "Charge" then
         if cachedChargeBtn and cachedChargeBtn:FindFirstChild("CooldownTime") and cachedChargeBtn.CooldownTime.Text == "" then
             print("yay")
