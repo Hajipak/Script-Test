@@ -359,11 +359,7 @@ AutoBlockTab:CreateInput({
     Callback = function(Text)
         local num = tonumber(Text)
         if num and num >= 0 then
-            autoBlockAudioDelay = num
             Rayfield.Flags["AutoBlockAudioDelay"].CurrentValue = num
-        else
-            autoBlockAudioDelay = 0
-            Rayfield.Flags["AutoBlockAudioDelay"].CurrentValue = 0
         end
     end,
 })
