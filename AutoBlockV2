@@ -101,8 +101,8 @@ local autoBlockTriggerAnims = {
 -- State Variables
 local autoBlockOn = false
 local autoBlockAudioOn = false
+local autoBlockAudioDelay = 0 
 local doubleblocktech = false
-local autoBlockAudioDelay = 0
 local looseFacing = true
 local detectionRange = 18
 local messageWhenAutoBlockOn = false
