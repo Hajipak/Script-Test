@@ -102,11 +102,11 @@ local autoBlockTriggerAnims = {
 local autoBlockOn = false
 local autoBlockAudioOn = false
 local doubleblocktech = false
+local autoBlockAudioDelay = 0
 local looseFacing = true
 local detectionRange = 18
 local messageWhenAutoBlockOn = false
 local messageWhenAutoBlock = ""
-local autoBlockAudioDelay = 0
 -- local fasterAudioAB = false (this is scrapped. im too lazy to remove it)
 local Debris = game:GetService("Debris")
 -- Anti-flick toggle state
