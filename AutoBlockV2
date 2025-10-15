@@ -106,6 +106,7 @@ local looseFacing = true
 local detectionRange = 18
 local messageWhenAutoBlockOn = false
 local messageWhenAutoBlock = ""
+local autoBlockAudioDelay = 0
 -- local fasterAudioAB = false (this is scrapped. im too lazy to remove it)
 local Debris = game:GetService("Debris")
 -- Anti-flick toggle state
@@ -329,8 +330,8 @@ AutoBlockTab:CreateInput({
     Callback = function(text)
         local num = tonumber(text)
         if num then
-            AUDIO_LOCAL_COOLDOWN = math.max(0, num)
-            print("AutoBlock Audio Delay set to: " .. tostring(AUDIO_LOCAL_COOLDOWN))
+            autoBlockAudioDelay = math.max(0, num)
+            print("AutoBlock Audio Delay set to:", autoBlockAudioDelay)
         end
     end,
 })
@@ -2054,7 +2055,13 @@ local function _attemptForSound(sound, idParam, mode)
 
     -- mode-specific extra checks & actions (preserve prints and exact calls)
     if mode == "Block" then
-        fireGuiBlock()
+        if autoBlockAudioDelay and autoBlockAudioDelay > 0 then
+            task.delay(autoBlockAudioDelay, function()
+                fireGuiBlock()
+            end)
+        else
+            fireGuiBlock()
+        end
     elseif mode == "Charge" then
         if cachedChargeBtn and cachedChargeBtn:FindFirstChild("CooldownTime") and cachedChargeBtn.CooldownTime.Text == "" then
             print("yay")
