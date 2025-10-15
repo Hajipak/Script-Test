@@ -359,7 +359,9 @@ AutoBlockTab:CreateInput({
     Callback = function(Text)
         local num = tonumber(Text)
         if num and num >= 0 then
-            Rayfield.Flags["AutoBlockAudioDelay"].CurrentValue = num
+            autoBlockAudioDelay = num
+        else
+            autoBlockAudioDelay = 0
         end
     end,
 })
@@ -2054,12 +2056,8 @@ local function _attemptForSound(sound, idParam, mode)
 
     -- mode-specific extra checks & actions (preserve prints and exact calls)
     if mode == "Block" then
-    local delayValue = Rayfield.Flags["AutoBlockAudioDelay"]
-        and tonumber(Rayfield.Flags["AutoBlockAudioDelay"].CurrentValue)
-        or autoBlockAudioDelay or 0
-
-    if delayValue > 0 then
-        task.wait(delayValue)
+    if autoBlockAudioDelay > 0 then
+        task.wait(autoBlockAudioDelay)
     end
     fireGuiBlock()
 end
