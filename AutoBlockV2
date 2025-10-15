@@ -2055,7 +2055,7 @@ local function _attemptForSound(sound, idParam, mode)
     end
 
     -- mode-specific extra checks & actions (preserve prints and exact calls)
-    if mode == "Block" then
+if mode == "Block" then
     if autoBlockAudioDelay > 0 then
         task.wait(autoBlockAudioDelay)
     end
