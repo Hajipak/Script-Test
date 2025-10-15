@@ -101,6 +101,7 @@ local autoBlockTriggerAnims = {
 -- State Variables
 local autoBlockOn = false
 local autoBlockAudioOn = false
+local autoBlockAudioDelay = 0
 local doubleblocktech = false
 local looseFacing = true
 local detectionRange = 18
@@ -348,6 +349,23 @@ AutoBlockTab:CreateKeybind({
 AutoBlockTab:CreateParagraph({
     Title = "Controller Keybind",
     Content = "Use the keybind above to toggle Auto Block Audio with your controller."
+})
+
+AutoBlockTab:CreateInput({
+    Name = "Auto Block Audio Delay (seconds)",
+    PlaceholderText = "0.25",
+    RemoveTextAfterFocusLost = false,
+    Flag = "AutoBlockAudioDelay",
+    Callback = function(Text)
+        local num = tonumber(Text)
+        if num and num >= 0 then
+            autoBlockAudioDelay = num
+            Rayfield.Flags["AutoBlockAudioDelay"].CurrentValue = num
+        else
+            autoBlockAudioDelay = 0
+            Rayfield.Flags["AutoBlockAudioDelay"].CurrentValue = 0
+        end
+    end,
 })
 
 -- make sure AutoBlockTab is a valid Rayfield tab object
@@ -783,7 +801,7 @@ BDTab:CreateInput({
     Callback = function(text)
         local num = tonumber(text)
         if num then
-            antiFlickDelay = math.max(0, num) -- donÃ¢â‚¬â„¢t allow negative
+            antiFlickDelay = math.max(0, num) -- donÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢t allow negative
         end
     end,
 })
@@ -892,7 +910,7 @@ BDTab:CreateInput({
     Callback = function(text)
         local num = tonumber(text)
         if num then
-            stagger = math.max(0, num) -- donÃ¢â‚¬â„¢t allow negative
+            stagger = math.max(0, num) -- donÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢t allow negative
         end
     end,
 })
@@ -907,7 +925,7 @@ BDTab:CreateInput({
     Callback = function(text)
         local num = tonumber(text)
         if num then
-            antiFlickBaseOffset = math.max(0, num) -- donÃ¢â‚¬â„¢t allow negative
+            antiFlickBaseOffset = math.max(0, num) -- donÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢t allow negative
         end
     end,
 })
@@ -1030,11 +1048,11 @@ FakeBlockTab:CreateButton({
                     return loadstring(game:HttpGet("https://raw.githubusercontent.com/skibidi399/Auto-block-script/refs/heads/main/fakeblock"))()
                 end)
                 if not success then
-                    warn("Ã¢ÂÅ’ Failed to load Fake Block GUI:", result)
+                    warn("ÃƒÂ¢Ã‚ÂÃ…â€™ Failed to load Fake Block GUI:", result)
                 end
             else
                 fakeGui.Enabled = true
-                print("Ã¢Å“â€¦ Fake Block GUI enabled")
+                print("ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ Fake Block GUI enabled")
             end
         end)
     end
@@ -1414,7 +1432,7 @@ local function addESP(obj)
     if not obj:FindFirstChild("HumanoidRootPart") then return end
 
     local plr = Players:GetPlayerFromCharacter(obj)
-    if not plr then return end -- Ã¢Å“â€¦ only add ESP if it's a player character
+    if not plr then return end -- ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ only add ESP if it's a player character
 
     -- Prevent duplicates
     if obj:FindFirstChild("ESP_Highlight") then return end
@@ -1561,7 +1579,7 @@ local function playCustomAnim(animId, isPunch)
     end)
 
     if success and track then
-        print("Ã¢Å“â€¦ Playing custom " .. (isPunch and "punch" or "block") .. " animation:", animId)
+        print("ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ Playing custom " .. (isPunch and "punch" or "block") .. " animation:", animId)
         track:Play()
         if isPunch then
             lastPunchTime = now
@@ -1569,7 +1587,7 @@ local function playCustomAnim(animId, isPunch)
             lastBlockTime = now
         end
     else
-        warn("Ã¢ÂÅ’ Failed to load or play custom animation: " .. animId)
+        warn("ÃƒÂ¢Ã‚ÂÃ…â€™ Failed to load or play custom animation: " .. animId)
     end
 end
 
@@ -2040,7 +2058,15 @@ local function _attemptForSound(sound, idParam, mode)
 
     -- mode-specific extra checks & actions (preserve prints and exact calls)
     if mode == "Block" then
-        fireGuiBlock()
+    local delayValue = Rayfield.Flags["AutoBlockAudioDelay"]
+        and tonumber(Rayfield.Flags["AutoBlockAudioDelay"].CurrentValue)
+        or autoBlockAudioDelay or 0
+
+    if delayValue > 0 then
+        task.wait(delayValue)
+    end
+    fireGuiBlock()
+end
     elseif mode == "Charge" then
         if cachedChargeBtn and cachedChargeBtn:FindFirstChild("CooldownTime") and cachedChargeBtn.CooldownTime.Text == "" then
             print("yay")
