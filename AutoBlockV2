@@ -2054,28 +2054,28 @@ local function _attemptForSound(sound, idParam, mode)
     end
 
     -- mode-specific extra checks & actions (preserve prints and exact calls)
-    if mode == "Block" then
-       -- Cek apakah Better Detection aktif
-       if antiFlickOn then
-          -- Gunakan delay Better Detection
-          if antiFlickDelay and antiFlickDelay > 0 then
-              task.delay(antiFlickDelay, function()
-                  fireGuiBlock()
-              end)
-          else
-              fireGuiBlock()
-          end
-      else
-          -- Gunakan delay AutoBlockAudio biasa
-          if autoBlockAudioDelay and autoBlockAudioDelay > 0 then
-              task.delay(autoBlockAudioDelay, function()
-                  fireGuiBlock()
-              end)
-          else
-              fireGuiBlock()
-          end
-      end
-  end
+   if mode == "Block" then
+    -- Cek apakah Better Detection aktif
+    if antiFlickOn then
+        -- Gunakan delay Better Detection
+        if antiFlickDelay and antiFlickDelay > 0 then
+            task.delay(antiFlickDelay, function()
+                fireGuiBlock()
+            end)
+        else
+            fireGuiBlock()
+        end
+    else
+        -- Gunakan delay AutoBlockAudio biasa
+        if autoBlockAudioDelay and autoBlockAudioDelay > 0 then
+            task.delay(autoBlockAudioDelay, function()
+                fireGuiBlock()
+            end)
+        else
+            fireGuiBlock()
+        end
+    end
+end
     elseif mode == "Charge" then
         if cachedChargeBtn and cachedChargeBtn:FindFirstChild("CooldownTime") and cachedChargeBtn.CooldownTime.Text == "" then
             print("yay")
