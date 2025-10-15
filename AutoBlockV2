@@ -2095,7 +2095,6 @@ local function _attemptForSound(sound, idParam, mode)
             fireGuiBlock()
         end)
     end
-end
     elseif mode == "Charge" then
         if cachedChargeBtn and cachedChargeBtn:FindFirstChild("CooldownTime") and cachedChargeBtn.CooldownTime.Text == "" then
             print("yay")
