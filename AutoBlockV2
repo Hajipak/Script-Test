@@ -107,6 +107,7 @@ local detectionRange = 18
 local messageWhenAutoBlockOn = false
 local messageWhenAutoBlock = ""
 local autoBlockAudioDelay = 0
+local autoBlockAudioBDDelay = 0
 local nextAudioBlockTime = 0
 -- local fasterAudioAB = false (this is scrapped. im too lazy to remove it)
 local Debris = game:GetService("Debris")
@@ -324,15 +325,29 @@ AutoBlockTab:CreateToggle({
 })
 
 AutoBlockTab:CreateInput({
-    Name = "Auto Block Audio Delay (seconds)",
+    Name = "Audio Delay (no BD)",
     PlaceholderText = "0",
     RemoveTextAfterFocusLost = false,
-    Flag = "AutoBlockAudioDelay",
+    Flag = "AutoBlockAudioDelayNormal",
     Callback = function(text)
         local num = tonumber(text)
         if num then
             autoBlockAudioDelay = math.max(0, num)
-            print("Audio delay set to:", autoBlockAudioDelay)
+            print("Audio delay (no BD):", autoBlockAudioDelay)
+        end
+    end,
+})
+
+AutoBlockTab:CreateInput({
+    Name = "Audio Delay (with BD)",
+    PlaceholderText = "0",
+    RemoveTextAfterFocusLost = false,
+    Flag = "AutoBlockAudioDelayBD",
+    Callback = function(text)
+        local num = tonumber(text)
+        if num then
+            autoBlockAudioBDDelay = math.max(0, num)
+            print("Audio delay (with BD):", autoBlockAudioBDDelay)
         end
     end,
 })
@@ -2056,14 +2071,22 @@ local function _attemptForSound(sound, idParam, mode)
 
     -- mode-specific extra checks & actions (preserve prints and exact calls)
     if mode == "Block" then
-        local now = tick()
-        if now >= nextAudioBlockTime then
-            nextAudioBlockTime = now + (autoBlockAudioDelay or 0)
-            task.spawn(function()
-                task.wait(autoBlockAudioDelay or 0)
-                fireGuiBlock()
-            end)
-        end
+    local now = tick()
+    local chosenDelay = 0
+
+    if antiFlickOn then
+        chosenDelay = autoBlockAudioBDDelay or 0
+    else
+        chosenDelay = autoBlockAudioDelay or 0
+    end
+
+    if now >= nextAudioBlockTime then
+        nextAudioBlockTime = now + chosenDelay
+        task.spawn(function()
+            task.wait(chosenDelay)
+            fireGuiBlock()
+        end)
+    end
     elseif mode == "Charge" then
         if cachedChargeBtn and cachedChargeBtn:FindFirstChild("CooldownTime") and cachedChargeBtn.CooldownTime.Text == "" then
             print("yay")
