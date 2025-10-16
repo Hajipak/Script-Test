@@ -106,9 +106,6 @@ local looseFacing = true
 local detectionRange = 18
 local messageWhenAutoBlockOn = false
 local messageWhenAutoBlock = ""
-local autoBlockAudioDelay = 0
-local autoBlockAudioBDDelay = 0
-local nextAudioBlockTime = 0
 -- local fasterAudioAB = false (this is scrapped. im too lazy to remove it)
 local Debris = game:GetService("Debris")
 -- Anti-flick toggle state
@@ -321,34 +318,6 @@ AutoBlockTab:CreateToggle({
     Flag = "AutoBlockAudio",
     Callback = function(state)
         autoBlockAudioOn = state
-    end,
-})
-
-AutoBlockTab:CreateInput({
-    Name = "Audio Delay (no BD)",
-    PlaceholderText = "0",
-    RemoveTextAfterFocusLost = false,
-    Flag = "AutoBlockAudioDelayNormal",
-    Callback = function(text)
-        local num = tonumber(text)
-        if num then
-            autoBlockAudioDelay = math.max(0, num)
-            print("Audio delay (no BD):", autoBlockAudioDelay)
-        end
-    end,
-})
-
-AutoBlockTab:CreateInput({
-    Name = "Audio Delay (with BD)",
-    PlaceholderText = "0",
-    RemoveTextAfterFocusLost = false,
-    Flag = "AutoBlockAudioDelayBD",
-    Callback = function(text)
-        local num = tonumber(text)
-        if num then
-            autoBlockAudioBDDelay = math.max(0, num)
-            print("Audio delay (with BD):", autoBlockAudioBDDelay)
-        end
     end,
 })
 
@@ -814,7 +783,7 @@ BDTab:CreateInput({
     Callback = function(text)
         local num = tonumber(text)
         if num then
-            antiFlickDelay = math.max(0, num) -- donÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢t allow negative
+            antiFlickDelay = math.max(0, num) -- donÃ¢â‚¬â„¢t allow negative
         end
     end,
 })
@@ -923,7 +892,7 @@ BDTab:CreateInput({
     Callback = function(text)
         local num = tonumber(text)
         if num then
-            stagger = math.max(0, num) -- donÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢t allow negative
+            stagger = math.max(0, num) -- donÃ¢â‚¬â„¢t allow negative
         end
     end,
 })
@@ -938,7 +907,55 @@ BDTab:CreateInput({
     Callback = function(text)
         local num = tonumber(text)
         if num then
-            antiFlickBaseOffset = math.max(0, num) -- donÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢t allow negative
+            antiFlickBaseOffset = math.max(0, num) -- donÃ¢â‚¬â„¢t allow negative
+        end
+    end,
+})
+
+-- ========== ADDED: AutoBlockAudio Delay SETTINGS FOR BETTER DETECTION ==========
+-- Default values (can be changed via BDTab inputs below)
+local BD_AUDIO_TRIGGER_DELAY = 0.1        -- delay after detecting sound before BD begins (seconds)
+local BD_AUDIO_LOCAL_COOLDOWN = 0.35      -- global cooldown between BD audio reactions (seconds)
+local BD_AUDIO_SOUND_THROTTLE = 1.2       -- cooldown per sound to avoid repeats (seconds)
+local BD_AUDIO_PERFORM_DELAY = 0.15       -- delay right before performing the block (seconds)
+local lastBDLocalBlockTime = 0            -- timestamp of last BD audio reaction
+
+-- BDTab inputs for the above
+BDTab:CreateInput({
+    Name = "Audio Trigger Delay (seconds)",
+    PlaceholderText = "0.1",
+    RemoveTextAfterFocusLost = false,
+    Flag = "BDAudioTriggerDelay",
+    Callback = function(text)
+        local num = tonumber(text)
+        if num then
+            BD_AUDIO_TRIGGER_DELAY = math.max(0, num)
+        end
+    end,
+})
+
+BDTab:CreateInput({
+    Name = "Audio Cooldown between BD blocks (seconds)",
+    PlaceholderText = "0.35",
+    RemoveTextAfterFocusLost = false,
+    Flag = "BDAudioLocalCooldown",
+    Callback = function(text)
+        local num = tonumber(text)
+        if num then
+            BD_AUDIO_LOCAL_COOLDOWN = math.max(0, num)
+        end
+    end,
+})
+
+BDTab:CreateInput({
+    Name = "Delay before BD Audio performs Block (seconds)",
+    PlaceholderText = "0.15",
+    RemoveTextAfterFocusLost = false,
+    Flag = "BDAudioPerformDelay",
+    Callback = function(text)
+        local num = tonumber(text)
+        if num then
+            BD_AUDIO_PERFORM_DELAY = math.max(0, num)
         end
     end,
 })
@@ -1061,11 +1078,11 @@ FakeBlockTab:CreateButton({
                     return loadstring(game:HttpGet("https://raw.githubusercontent.com/skibidi399/Auto-block-script/refs/heads/main/fakeblock"))()
                 end)
                 if not success then
-                    warn("ÃƒÆ’Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒâ€¦Ã¢â‚¬â„¢ Failed to load Fake Block GUI:", result)
+                    warn("Ã¢ÂÅ’ Failed to load Fake Block GUI:", result)
                 end
             else
                 fakeGui.Enabled = true
-                print("ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã¢â‚¬Å“ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ Fake Block GUI enabled")
+                print("Ã¢Å“â€¦ Fake Block GUI enabled")
             end
         end)
     end
@@ -1445,7 +1462,7 @@ local function addESP(obj)
     if not obj:FindFirstChild("HumanoidRootPart") then return end
 
     local plr = Players:GetPlayerFromCharacter(obj)
-    if not plr then return end -- ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã¢â‚¬Å“ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ only add ESP if it's a player character
+    if not plr then return end -- Ã¢Å“â€¦ only add ESP if it's a player character
 
     -- Prevent duplicates
     if obj:FindFirstChild("ESP_Highlight") then return end
@@ -1592,7 +1609,7 @@ local function playCustomAnim(animId, isPunch)
     end)
 
     if success and track then
-        print("ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã¢â‚¬Å“ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ Playing custom " .. (isPunch and "punch" or "block") .. " animation:", animId)
+        print("Ã¢Å“â€¦ Playing custom " .. (isPunch and "punch" or "block") .. " animation:", animId)
         track:Play()
         if isPunch then
             lastPunchTime = now
@@ -1600,7 +1617,7 @@ local function playCustomAnim(animId, isPunch)
             lastBlockTime = now
         end
     else
-        warn("ÃƒÆ’Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒâ€¦Ã¢â‚¬â„¢ Failed to load or play custom animation: " .. animId)
+        warn("Ã¢ÂÅ’ Failed to load or play custom animation: " .. animId)
     end
 end
 
@@ -2071,22 +2088,7 @@ local function _attemptForSound(sound, idParam, mode)
 
     -- mode-specific extra checks & actions (preserve prints and exact calls)
     if mode == "Block" then
-    local now = tick()
-    local chosenDelay = 0
-
-    if antiFlickOn then
-        chosenDelay = autoBlockAudioBDDelay or 0
-    else
-        chosenDelay = autoBlockAudioDelay or 0
-    end
-
-    if now >= nextAudioBlockTime then
-        nextAudioBlockTime = now + chosenDelay
-        task.spawn(function()
-            task.wait(chosenDelay)
-            fireGuiBlock()
-        end)
-    end
+        fireGuiBlock()
     elseif mode == "Charge" then
         if cachedChargeBtn and cachedChargeBtn:FindFirstChild("CooldownTime") and cachedChargeBtn.CooldownTime.Text == "" then
             print("yay")
@@ -2123,8 +2125,8 @@ local function attemptCloneForSound(sound, idParam)
     return _attemptForSound(sound, idParam, "Clone")
 end
 
--- Improved hookSound: cache id and keep placeholder for hrp/char (so attemptBlock hot-path reads cached data)
-
+-- attemptBDParts: Better Detection version triggered by audio.
+-- Modified to include BD audio delay settings (trigger delay, local cooldown, perform delay)
 local function attemptBDParts(sound)
     if not autoBlockAudioOn then return end
     if not sound or not sound:IsA("Sound") then return end
@@ -2133,11 +2135,26 @@ local function attemptBDParts(sound)
     local id = extractNumericSoundId(sound)
     if not id or not autoBlockTriggerSounds[id] then return end
 
-    local t = tick()
-    if soundBlockedUntil[sound] and t < soundBlockedUntil[sound] then return end
+    local now = tick()
 
-    local lp = Players.LocalPlayer
-    local myChar = lp and lp.Character
+    -- per-sound throttle (prevent double triggers for same sound)
+    if soundBlockedUntil[sound] and now < soundBlockedUntil[sound] then
+        return
+    end
+
+    -- global BD audio cooldown
+    if now - lastBDLocalBlockTime < BD_AUDIO_LOCAL_COOLDOWN then
+        return
+    end
+    lastBDLocalBlockTime = now
+
+    -- trigger delay: wait a little before processing BD parts (like AUDIO_PREDICT_DT behavior)
+    if BD_AUDIO_TRIGGER_DELAY and BD_AUDIO_TRIGGER_DELAY > 0 then
+        task.wait(BD_AUDIO_TRIGGER_DELAY)
+    end
+
+    local lpLocal = Players.LocalPlayer
+    local myChar = lpLocal and lpLocal.Character
     local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
     if not myRoot then return end
 
@@ -2146,15 +2163,15 @@ local function attemptBDParts(sound)
 
     local char = getCharacterFromDescendant(soundPart)
     local plr = char and Players:GetPlayerFromCharacter(char)
-    if not plr or plr == lp then return end
+    if not plr or plr == lpLocal then return end
 
-    local hrp = char:FindFirstChild("HumanoidRootPart")
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
 
-    local Debris = game:GetService("Debris")
+    local DebrisSvc = game:GetService("Debris")
 
     if antiFlickOn then
-        local basePartSize = Vector3.new(5.5, 7.5, 8.5)  -- original / default size
+        local basePartSize = Vector3.new(5.5, 7.5, 8.5)
         local partSize = basePartSize * (blockPartsSizeMultiplier or 1)
         local count = math.max(1, antiFlickParts or 4)
         local base  = antiFlickBaseOffset or 2.5
@@ -2175,16 +2192,13 @@ local function attemptBDParts(sound)
                 local forwardSpeed = vel:Dot(hrp.CFrame.LookVector)
                 local lateralSpeed = vel:Dot(hrp.CFrame.RightVector)
 
-                -- separate multipliers
                 local pStrength = (type(predictionStrength) == "number" and predictionStrength) or 1
                 local pTurn = (type(predictionTurnStrength) == "number" and predictionTurnStrength) or 1
 
-                -- raw predicted displacements
                 local forwardPredictRaw = forwardSpeed * PRED_SECONDS_FORWARD * pStrength
                 local lateralPredictRaw = lateralSpeed * PRED_SECONDS_LATERAL * pStrength
                 local turnLateralRaw    = st.angVel * ANG_TURN_MULTIPLIER * pTurn
 
-                -- clamps (scaled separately)
                 local forwardClamp = PRED_MAX_FORWARD * pStrength
                 local lateralClamp = PRED_MAX_LATERAL * pStrength
                 local turnClamp    = PRED_MAX_LATERAL * pTurn
@@ -2209,7 +2223,7 @@ local function attemptBDParts(sound)
                 part.BrickColor = BrickColor.new("Bright blue")
                 part.Parent = workspace
 
-                Debris:AddItem(part, lifeTime)
+                DebrisSvc:AddItem(part, lifeTime)
 
                 if isPointInsidePart(part, myRoot.Position) then
                     blocked = true
@@ -2226,6 +2240,11 @@ local function attemptBDParts(sound)
 
                 if blocked then
                     if not (facingCheckEnabled and not isFacing(myRoot, hrp)) then
+                        -- perform delay: wait right before executing the block action
+                        if BD_AUDIO_PERFORM_DELAY and BD_AUDIO_PERFORM_DELAY > 0 then
+                            task.wait(BD_AUDIO_PERFORM_DELAY)
+                        end
+
                         if autoblocktype == "Block" then
                             fireGuiBlock()
                         elseif autoblocktype == "Charge" then
@@ -2233,7 +2252,9 @@ local function attemptBDParts(sound)
                         elseif autoblocktype == "7n7 Clone" then
                             fireGuiClone()
                         end
-                        soundBlockedUntil[sound] = t + 1.2
+
+                        -- throttle this sound so it won't retrigger immediately
+                        soundBlockedUntil[sound] = now + BD_AUDIO_SOUND_THROTTLE
                     end
                     break
                 end
