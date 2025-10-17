@@ -519,6 +519,8 @@ AutoBlockTab:CreateToggle({
 })
 
 -- make sure AutoBlockTab is a valid Rayfield tab object
+AutoBlockTab:CreateSection("Change Type Block")
+
 local autoblocktype = "Block"
 
 local StarterGui = game:GetService("StarterGui")
