@@ -377,6 +377,22 @@ AutoBlockTab:CreateParagraph({
     Content = "Use the keybind above to toggle Auto Block Audio with your controller."
 })
 
+function PerformAutoBlockAudio()
+    if not autoBlockAudioOn then return end
+    task.spawn(function()
+        task.wait(AUTO_BLOCK_AUDIO_DELAY)
+        fireGuiBlock()  -- atau fireGuiCharge() / fireGuiClone()
+    end)
+end
+
+function PerformAutoBlockAnimation()
+    if not autoBlockOn then return end
+    task.spawn(function()
+        task.wait(AUTO_BLOCK_ANIMATION_DELAY)
+        fireGuiBlock()  -- atau fireGuiCharge() / fireGuiClone()
+    end)
+end
+
 AutoBlockTab:CreateSection("AutoBlockAudio Controls")
 
 AutoBlockTab:CreateToggle({
@@ -542,22 +558,6 @@ AutoBlockTab:CreateToggle({
         end
     end,
 })
-
-function PerformAutoBlockAudio()
-    if not autoBlockAudioOn then return end
-    task.spawn(function()
-        task.wait(AUTO_BLOCK_AUDIO_DELAY)
-        fireGuiBlock()  -- atau fireGuiCharge() / fireGuiClone()
-    end)
-end
-
-function PerformAutoBlockAnimation()
-    if not autoBlockOn then return end
-    task.spawn(function()
-        task.wait(AUTO_BLOCK_ANIMATION_DELAY)
-        fireGuiBlock()  -- atau fireGuiCharge() / fireGuiClone()
-    end)
-end
 
 -- make sure AutoBlockTab is a valid Rayfield tab object
 AutoBlockTab:CreateSection("Change Type Block")
