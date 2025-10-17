@@ -354,54 +354,6 @@ AutoBlockTab:CreateParagraph({
     Content = "Use the keybind above to toggle Auto Block Audio with your controller."
 })
 
--- ==============================================
---  DELAY SETTINGS --
--- ==============================================
-
-local AUTO_BLOCK_AUDIO_DELAY = 0.15
-local AUTO_BLOCK_ANIMATION_DELAY = 0.25
-
-AutoBlockTab:CreateInput({
-    Name = "AutoBlockAudio Delay (seconds)",
-    PlaceholderText = tostring(AUTO_BLOCK_AUDIO_DELAY),
-    RemoveTextAfterFocusLost = false,
-    Callback = function(Text)
-        local num = tonumber(Text)
-        if num and num >= 0 then
-            AUTO_BLOCK_AUDIO_DELAY = num
-        end
-    end
-})
-
-AutoBlockTab:CreateInput({
-    Name = "AutoBlockAnimation Delay (seconds)",
-    PlaceholderText = tostring(AUTO_BLOCK_ANIMATION_DELAY),
-    RemoveTextAfterFocusLost = false,
-    Callback = function(Text)
-        local num = tonumber(Text)
-        if num and num >= 0 then
-            AUTO_BLOCK_ANIMATION_DELAY = num
-        end
-    end
-})
-
--- Fungsi Auto Block Delay --
-function PerformAutoBlockAudio()
-    if not autoBlockAudioOn then return end
-    task.spawn(function()
-        task.wait(AUTO_BLOCK_AUDIO_DELAY)
-        fireGuiBlock()  -- ganti sesuai sistemmu (bisa Charge/Clone)
-    end)
-end
-
-function PerformAutoBlockAnimation()
-    if not autoBlockOn then return end
-    task.spawn(function()
-        task.wait(AUTO_BLOCK_ANIMATION_DELAY)
-        fireGuiBlock()  -- atau fireGuiCharge() sesuai sistemmu
-    end)
-end
-
 AutoBlockTab:CreateSection("AutoBlockAudio Controls")
 
 AutoBlockTab:CreateToggle({
