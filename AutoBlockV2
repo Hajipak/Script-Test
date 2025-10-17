@@ -973,7 +973,7 @@ BDTab:CreateInput({
     Callback = function(text)
         local num = tonumber(text)
         if num then
-            antiFlickDelay = math.max(0, num) -- donÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢t allow negative
+            antiFlickDelay = math.max(0, num) -- donÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢t allow negative
         end
     end,
 })
@@ -1082,7 +1082,7 @@ BDTab:CreateInput({
     Callback = function(text)
         local num = tonumber(text)
         if num then
-            stagger = math.max(0, num) -- donÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢t allow negative
+            stagger = math.max(0, num) -- donÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢t allow negative
         end
     end,
 })
@@ -1097,7 +1097,7 @@ BDTab:CreateInput({
     Callback = function(text)
         local num = tonumber(text)
         if num then
-            antiFlickBaseOffset = math.max(0, num) -- donÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢t allow negative
+            antiFlickBaseOffset = math.max(0, num) -- donÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢t allow negative
         end
     end,
 })
@@ -1132,7 +1132,7 @@ BDTab:CreateInput({
             BD_PART_TRANSPARENCY = num
             print("[BD] Part Transparency set to:", num)
         else
-            warn("[BD] Invalid transparency value (must be 0â€“1)")
+            warn("[BD] Invalid transparency value (must be 0Ã¢â‚¬â€œ1)")
         end
     end
 })
@@ -1255,11 +1255,11 @@ FakeBlockTab:CreateButton({
                     return loadstring(game:HttpGet("https://raw.githubusercontent.com/skibidi399/Auto-block-script/refs/heads/main/fakeblock"))()
                 end)
                 if not success then
-                    warn("ÃƒÂ¢Ã‚ÂÃ…â€™ Failed to load Fake Block GUI:", result)
+                    warn("ÃƒÆ’Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒâ€¦Ã¢â‚¬â„¢ Failed to load Fake Block GUI:", result)
                 end
             else
                 fakeGui.Enabled = true
-                print("ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ Fake Block GUI enabled")
+                print("ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã¢â‚¬Å“ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ Fake Block GUI enabled")
             end
         end)
     end
@@ -1639,7 +1639,7 @@ local function addESP(obj)
     if not obj:FindFirstChild("HumanoidRootPart") then return end
 
     local plr = Players:GetPlayerFromCharacter(obj)
-    if not plr then return end -- ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ only add ESP if it's a player character
+    if not plr then return end -- ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã¢â‚¬Å“ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ only add ESP if it's a player character
 
     -- Prevent duplicates
     if obj:FindFirstChild("ESP_Highlight") then return end
@@ -1786,7 +1786,7 @@ local function playCustomAnim(animId, isPunch)
     end)
 
     if success and track then
-        print("ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ Playing custom " .. (isPunch and "punch" or "block") .. " animation:", animId)
+        print("ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã¢â‚¬Å“ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ Playing custom " .. (isPunch and "punch" or "block") .. " animation:", animId)
         track:Play()
         if isPunch then
             lastPunchTime = now
@@ -1794,7 +1794,7 @@ local function playCustomAnim(animId, isPunch)
             lastBlockTime = now
         end
     else
-        warn("ÃƒÂ¢Ã‚ÂÃ…â€™ Failed to load or play custom animation: " .. animId)
+        warn("ÃƒÆ’Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒâ€¦Ã¢â‚¬â„¢ Failed to load or play custom animation: " .. animId)
     end
 end
 
@@ -2325,7 +2325,7 @@ local function attemptCloneForSound(sound, idParam)
 end
 
 -- ================================================================
--- ðŸŸ¦ Fungsi utama Better Detection (attemptBDParts)
+-- Ã°Å¸Å¸Â¦ Fungsi utama Better Detection (attemptBDParts)
 -- ================================================================
 
 local function attemptBDParts(sound)
@@ -2430,7 +2430,7 @@ local function attemptBDParts(sound)
                 if blocked then
                     if not (facingCheckEnabled and not isFacing(myRoot, hrp)) then
 
-                        -- ðŸŸ¨ Delay sebelum block dilakukan
+                        -- Ã°Å¸Å¸Â¨ Delay sebelum block dilakukan
                         if BD_AUDIO_PERFORM_DELAY and BD_AUDIO_PERFORM_DELAY > 0 then
                             task.wait(BD_AUDIO_PERFORM_DELAY)
                         end
@@ -2714,27 +2714,28 @@ task.spawn(function()
     end
 end)
 
---------------------------------------------------
--- 🔹 DOUBLE PUNCH DETECTION (INSTANT)
---------------------------------------------------
+-- double-punch tech detection
+-- Replacement double-punch detection (safer + debounced)
 local _REFRESH_UI_IF_NIL = true
-local TRACK_DEBOUNCE = 0.45      -- waktu minimal antar punch track
-local START_WINDOW = 0           -- awal animasi dianggap "mulai"
-local trackLastTriggered = setmetatable({}, { __mode = "k" }) -- weak keys, aman memory
+local TRACK_DEBOUNCE = 0.45   -- seconds to avoid retriggering same track
+local START_WINDOW = 0     -- consider a track "starting" if TimePosition <= START_WINDOW
+
+local trackLastTriggered = setmetatable({}, { __mode = "k" }) -- weak keys (AnimationTrack -> last tick)
 
 RunService.RenderStepped:Connect(function()
     if not doubleblocktech then return end
-
     local char = lp and lp.Character
     if not char then return end
 
     local humanoid = char:FindFirstChildOfClass("Humanoid")
-    if not humanoid then return end
-    local animator = humanoid:FindFirstChildOfClass("Animator")
-    if not animator then return end
+    local animator = cachedAnimator
+    if not animator then
+        refreshAnimator()
+        animator = cachedAnimator
+    end
 
-    if _REFRESH_UI_IF_NIL and (not cachedPunchBtn or not cachedCharges)
-        and type(refreshUIRefs) == "function" then
+    -- ensure GUI refs fresh if missing (helps when GUI recreates)
+    if _REFRESH_UI_IF_NIL and (not cachedPunchBtn or not cachedCharges) and type(refreshUIRefs) == "function" then
         pcall(refreshUIRefs)
     end
 
@@ -2743,24 +2744,23 @@ RunService.RenderStepped:Connect(function()
             local a = track.Animation
             return a and tostring(a.AnimationId):match("%d+")
         end)
-
         if ok and animId and table.find(blockAnimIds, animId) then
+            -- safe read of time position
             local timePos = 0
             pcall(function() timePos = track.TimePosition or 0 end)
 
-            local last = trackLastTriggered[track]
+            -- only trigger when the track is just starting (helps with timing)
             if timePos <= START_WINDOW then
+                local last = trackLastTriggered[track]
                 if not last or (tick() - last) >= TRACK_DEBOUNCE then
                     trackLastTriggered[track] = tick()
-
-                    if _REFRESH_UI_IF_NIL
-                        and (not cachedPunchBtn or not cachedCharges)
-                        and type(refreshUIRefs) == "function" then
+                    -- extra safety: ensure punch button exists before trying
+                    if cachedPunchBtn == nil and type(refreshUIRefs) == "function" then
                         pcall(refreshUIRefs)
                     end
 
-                    -- 🔥 Instant double punch dari animasi
-                    print("[DoublePunch] Animation trigger active")
+                    -- try GUI-based punch activation (this function already handles safety)
+                    print("trying to punch")
                     pcall(fireGuiPunch)
                 end
             end
@@ -2845,9 +2845,7 @@ task.spawn(function()
     end
 end)
 
------------------------------------------------------
--- 🔹 AUTO BLOCK + PUNCH DETECTION (INSTANT)
------------------------------------------------------
+-- Auto block + punch detection loop
 RunService.RenderStepped:Connect(function()
     local gui = PlayerGui:FindFirstChild("MainUI")
     local punchBtn = gui and gui:FindFirstChild("AbilityContainer") and gui.AbilityContainer:FindFirstChild("Punch")
@@ -2858,30 +2856,25 @@ RunService.RenderStepped:Connect(function()
     local myChar = lp.Character
     if not myChar then return end
     local myRoot = myChar:FindFirstChild("HumanoidRootPart")
-    local Humanoid = myChar:FindFirstChildOfClass("Humanoid")
-    if not myRoot or not Humanoid then return end
-
-    -- Cek semua pemain sekitar (musuh)
+    Humanoid = myChar:FindFirstChildOfClass("Humanoid")
+        -- Auto Block: Trigger block if a valid animation is played by a killer
     for _, plr in ipairs(Players:GetPlayers()) do
         if plr ~= lp and plr.Character then
             local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
             local hum = plr.Character:FindFirstChildOfClass("Humanoid")
-            local animator = hum and hum:FindFirstChildOfClass("Animator")
-            local animTracks = animator and animator:GetPlayingAnimationTracks()
+            local animTracks = hum and hum:FindFirstChildOfClass("Animator") and hum:FindFirstChildOfClass("Animator"):GetPlayingAnimationTracks()
 
-            if hrp and (hrp.Position - myRoot.Position).Magnitude <= detectionRange then
+            if hrp and myRoot and (hrp.Position - myRoot.Position).Magnitude <= detectionRange then
                 for _, track in ipairs(animTracks or {}) do
                     local id = tostring(track.Animation.AnimationId):match("%d+")
                     if table.find(autoBlockTriggerAnims, id) then
                         if autoBlockOn and (hrp.Position - myRoot.Position).Magnitude <= detectionRange then
                             if isFacing(myRoot, hrp) then
                                 if cooldown and cooldown.Text == "" then
-                                    fireGuiBlock()
+                                    fireRemoteBlock()
                                 end
-                                -- 🔥 Double punch aktif (langsung)
-                                if doubleblocktech and charges and charges.Text == "1" then
-                                    fireGuiPunch()
-                                    print("[AutoBlock] Double punch executed instantly")
+                                if doubleblocktech == true and charges and charges.Text == "1" then
+                                    fireRemotePunch()
                                 end
                             end
                         end
@@ -2890,7 +2883,6 @@ RunService.RenderStepped:Connect(function()
             end
         end
     end
-end)
 
     -- Detect if player is playing a block animation, and blockTP is enabled
 
