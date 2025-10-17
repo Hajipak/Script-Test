@@ -305,47 +305,24 @@ NoticeTab:CreateParagraph({
     Content = ".gg/Tmby2GkKJR"
 })
 
-local AUTO_BLOCK_AUDIO_DELAY = 0.15
-local AUTO_BLOCK_ANIMATION_DELAY = 0.25
-
--- 🔹 Toggle dulu
+-- GUI Toggles
 AutoBlockTab:CreateToggle({
-    Name = "Enable AutoBlockAudio",
+    Name = "Auto Block (Animation)",
     CurrentValue = false,
-    Flag = "AutoBlockAudioToggle",
-    Callback = function(Value)
-        autoBlockAudioOn = Value
+    Flag = "AutoBlockAnimation",
+    Callback = function(Value) 
+        autoBlockOn = Value 
     end,
 })
 
+-- Rayfield toggle for Auto Block (Audio)
 AutoBlockTab:CreateToggle({
-    Name = "Enable AutoBlockAnimation (Must be fixed)",
+    Name = "Auto Block (Audio)",
     CurrentValue = false,
-    Flag = "AutoBlockAnimationToggle",
-    Callback = function(Value)
-        autoBlockOn = Value
+    Flag = "AutoBlockAudio",
+    Callback = function(state)
+        autoBlockAudioOn = state
     end,
-})
-
--- 🔹 Baru input delay di bawah
-AutoBlockTab:CreateInput({
-    Name = "AutoBlockAudio Delay (seconds)",
-    PlaceholderText = tostring(AUTO_BLOCK_AUDIO_DELAY),
-    RemoveTextAfterFocusLost = false,
-    Callback = function(Text)
-        local num = tonumber(Text)
-        if num then AUTO_BLOCK_AUDIO_DELAY = num end
-    end
-})
-
-AutoBlockTab:CreateInput({
-    Name = "AutoBlockAnimation Delay (seconds)",
-    PlaceholderText = tostring(AUTO_BLOCK_ANIMATION_DELAY),
-    RemoveTextAfterFocusLost = false,
-    Callback = function(Text)
-        local num = tonumber(Text)
-        if num then AUTO_BLOCK_ANIMATION_DELAY = num end
-    end
 })
 
 AutoBlockTab:CreateKeybind({
@@ -376,22 +353,6 @@ AutoBlockTab:CreateParagraph({
     Title = "Controller Keybind",
     Content = "Use the keybind above to toggle Auto Block Audio with your controller."
 })
-
-function PerformAutoBlockAudio()
-    if not autoBlockAudioOn then return end
-    task.spawn(function()
-        task.wait(AUTO_BLOCK_AUDIO_DELAY)
-        fireGuiBlock()  -- atau fireGuiCharge() / fireGuiClone()
-    end)
-end
-
-function PerformAutoBlockAnimation()
-    if not autoBlockOn then return end
-    task.spawn(function()
-        task.wait(AUTO_BLOCK_ANIMATION_DELAY)
-        fireGuiBlock()  -- atau fireGuiCharge() / fireGuiClone()
-    end)
-end
 
 AutoBlockTab:CreateSection("AutoBlockAudio Controls")
 
@@ -994,7 +955,7 @@ BDTab:CreateInput({
     Callback = function(text)
         local num = tonumber(text)
         if num then
-            antiFlickDelay = math.max(0, num) -- donÃ¢â‚¬â„¢t allow negative
+            antiFlickDelay = math.max(0, num) -- donÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢t allow negative
         end
     end,
 })
@@ -1103,7 +1064,7 @@ BDTab:CreateInput({
     Callback = function(text)
         local num = tonumber(text)
         if num then
-            stagger = math.max(0, num) -- donÃ¢â‚¬â„¢t allow negative
+            stagger = math.max(0, num) -- donÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢t allow negative
         end
     end,
 })
@@ -1118,7 +1079,7 @@ BDTab:CreateInput({
     Callback = function(text)
         local num = tonumber(text)
         if num then
-            antiFlickBaseOffset = math.max(0, num) -- donÃ¢â‚¬â„¢t allow negative
+            antiFlickBaseOffset = math.max(0, num) -- donÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢t allow negative
         end
     end,
 })
@@ -1153,7 +1114,7 @@ BDTab:CreateInput({
             BD_PART_TRANSPARENCY = num
             print("[BD] Part Transparency set to:", num)
         else
-            warn("[BD] Invalid transparency value (must be 0–1)")
+            warn("[BD] Invalid transparency value (must be 0â€“1)")
         end
     end
 })
@@ -1276,11 +1237,11 @@ FakeBlockTab:CreateButton({
                     return loadstring(game:HttpGet("https://raw.githubusercontent.com/skibidi399/Auto-block-script/refs/heads/main/fakeblock"))()
                 end)
                 if not success then
-                    warn("Ã¢ÂÅ’ Failed to load Fake Block GUI:", result)
+                    warn("ÃƒÂ¢Ã‚ÂÃ…â€™ Failed to load Fake Block GUI:", result)
                 end
             else
                 fakeGui.Enabled = true
-                print("Ã¢Å“â€¦ Fake Block GUI enabled")
+                print("ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ Fake Block GUI enabled")
             end
         end)
     end
@@ -1660,7 +1621,7 @@ local function addESP(obj)
     if not obj:FindFirstChild("HumanoidRootPart") then return end
 
     local plr = Players:GetPlayerFromCharacter(obj)
-    if not plr then return end -- Ã¢Å“â€¦ only add ESP if it's a player character
+    if not plr then return end -- ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ only add ESP if it's a player character
 
     -- Prevent duplicates
     if obj:FindFirstChild("ESP_Highlight") then return end
@@ -1807,7 +1768,7 @@ local function playCustomAnim(animId, isPunch)
     end)
 
     if success and track then
-        print("Ã¢Å“â€¦ Playing custom " .. (isPunch and "punch" or "block") .. " animation:", animId)
+        print("ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ Playing custom " .. (isPunch and "punch" or "block") .. " animation:", animId)
         track:Play()
         if isPunch then
             lastPunchTime = now
@@ -1815,7 +1776,7 @@ local function playCustomAnim(animId, isPunch)
             lastBlockTime = now
         end
     else
-        warn("Ã¢ÂÅ’ Failed to load or play custom animation: " .. animId)
+        warn("ÃƒÂ¢Ã‚ÂÃ…â€™ Failed to load or play custom animation: " .. animId)
     end
 end
 
@@ -2324,7 +2285,7 @@ local function attemptCloneForSound(sound, idParam)
 end
 
 -- ================================================================
--- 🟦 Fungsi utama Better Detection (attemptBDParts)
+-- ðŸŸ¦ Fungsi utama Better Detection (attemptBDParts)
 -- ================================================================
 
 local function attemptBDParts(sound)
@@ -2429,7 +2390,7 @@ local function attemptBDParts(sound)
                 if blocked then
                     if not (facingCheckEnabled and not isFacing(myRoot, hrp)) then
 
-                        -- 🟨 Delay sebelum block dilakukan
+                        -- ðŸŸ¨ Delay sebelum block dilakukan
                         if BD_AUDIO_PERFORM_DELAY and BD_AUDIO_PERFORM_DELAY > 0 then
                             task.wait(BD_AUDIO_PERFORM_DELAY)
                         end
