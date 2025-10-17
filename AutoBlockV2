@@ -106,8 +106,6 @@ local nextAudioBlockTime = 0
 local floatingGuiAudio = nil
 local floatingGuiAnim = nil
 local doubleblocktech = false
-local lastPunchTime = 0
-local punchDebounce = 0.3
 local looseFacing = true
 local detectionRange = 18
 local messageWhenAutoBlockOn = false
@@ -2717,14 +2715,12 @@ task.spawn(function()
 end)
 
 --------------------------------------------------
--- DOUBLE-PUNCH TECH DETECTION (FIXED & DEBOUNCED)
+-- 🔹 DOUBLE PUNCH DETECTION (INSTANT)
 --------------------------------------------------
 local _REFRESH_UI_IF_NIL = true
-local TRACK_DEBOUNCE = 0.45   -- seconds to avoid retriggering same track
-local START_WINDOW = 0     -- consider a track "starting" if TimePosition <= START_WINDOW
-local trackLastTriggered = {}
-
-local trackLastTriggered = setmetatable({}, { __mode = "k" }) -- weak keys (AnimationTrack -> last tick)
+local TRACK_DEBOUNCE = 0.45      -- waktu minimal antar punch track
+local START_WINDOW = 0           -- awal animasi dianggap "mulai"
+local trackLastTriggered = setmetatable({}, { __mode = "k" }) -- weak keys, aman memory
 
 RunService.RenderStepped:Connect(function()
     if not doubleblocktech then return end
@@ -2733,11 +2729,8 @@ RunService.RenderStepped:Connect(function()
     if not char then return end
 
     local humanoid = char:FindFirstChildOfClass("Humanoid")
-    local animator = cachedAnimator
-    if not animator then
-        refreshAnimator()
-        animator = cachedAnimator
-    end
+    if not humanoid then return end
+    local animator = humanoid:FindFirstChildOfClass("Animator")
     if not animator then return end
 
     if _REFRESH_UI_IF_NIL and (not cachedPunchBtn or not cachedCharges)
@@ -2755,10 +2748,10 @@ RunService.RenderStepped:Connect(function()
             local timePos = 0
             pcall(function() timePos = track.TimePosition or 0 end)
 
-            local last = trackLastTriggered[animId]
+            local last = trackLastTriggered[track]
             if timePos <= START_WINDOW then
                 if not last or (tick() - last) >= TRACK_DEBOUNCE then
-                    trackLastTriggered[animId] = tick()
+                    trackLastTriggered[track] = tick()
 
                     if _REFRESH_UI_IF_NIL
                         and (not cachedPunchBtn or not cachedCharges)
@@ -2766,7 +2759,8 @@ RunService.RenderStepped:Connect(function()
                         pcall(refreshUIRefs)
                     end
 
-                    print("[DoublePunch] Punch triggered once for animId:", animId)
+                    -- 🔥 Instant double punch dari animasi
+                    print("[DoublePunch] Animation trigger active")
                     pcall(fireGuiPunch)
                 end
             end
@@ -2852,7 +2846,7 @@ task.spawn(function()
 end)
 
 -----------------------------------------------------
--- AUTO BLOCK + PUNCH DETECTION LOOP (FIXED VERSION)
+-- 🔹 AUTO BLOCK + PUNCH DETECTION (INSTANT)
 -----------------------------------------------------
 RunService.RenderStepped:Connect(function()
     local gui = PlayerGui:FindFirstChild("MainUI")
@@ -2864,9 +2858,10 @@ RunService.RenderStepped:Connect(function()
     local myChar = lp.Character
     if not myChar then return end
     local myRoot = myChar:FindFirstChild("HumanoidRootPart")
-    Humanoid = myChar:FindFirstChildOfClass("Humanoid")
+    local Humanoid = myChar:FindFirstChildOfClass("Humanoid")
     if not myRoot or not Humanoid then return end
 
+    -- Cek semua pemain sekitar (musuh)
     for _, plr in ipairs(Players:GetPlayers()) do
         if plr ~= lp and plr.Character then
             local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
@@ -2881,14 +2876,12 @@ RunService.RenderStepped:Connect(function()
                         if autoBlockOn and (hrp.Position - myRoot.Position).Magnitude <= detectionRange then
                             if isFacing(myRoot, hrp) then
                                 if cooldown and cooldown.Text == "" then
-                                    fireRemoteBlock()
+                                    fireGuiBlock()
                                 end
+                                -- 🔥 Double punch aktif (langsung)
                                 if doubleblocktech and charges and charges.Text == "1" then
-                                    if tick() - lastPunchTime >= punchDebounce then
-                                        lastPunchTime = tick()
-                                        fireRemotePunch()
-                                        print("[AutoBlock] Double punch triggered once")
-                                    end
+                                    fireGuiPunch()
+                                    print("[AutoBlock] Double punch executed instantly")
                                 end
                             end
                         end
