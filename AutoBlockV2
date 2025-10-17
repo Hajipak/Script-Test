@@ -1099,6 +1099,24 @@ BDTab:CreateInput({
     end,
 })
 
+-- Better Detection Transparent with Input --
+local BD_PART_TRANSPARENCY = 0.45
+
+BDTab:CreateInput({
+    Name = "Part Transparency (0 = solid, 1 = invisible)",
+    PlaceholderText = tostring(BD_PART_TRANSPARENCY),
+    RemoveTextAfterFocusLost = false,
+    Callback = function(Text)
+        local num = tonumber(Text)
+        if num and num >= 0 and num <= 1 then
+            BD_PART_TRANSPARENCY = num
+            print("[BD] Part Transparency set to:", num)
+        else
+            warn("[BD] Invalid transparency value (must be 0–1)")
+        end
+    end
+})
+
 TechTab:CreateToggle({
     Name = "Double Punch Tech",
     CurrentValue = false,
@@ -2343,7 +2361,7 @@ local function attemptBDParts(sound)
                 local part = Instance.new("Part")
                 part.Name = "AntiFlickZone"
                 part.Size = partSize
-                part.Transparency = 0.45
+                part.Transparency = BD_PART_TRANSPARENCY  -- letakkan di sini
                 part.Anchored = true
                 part.CanCollide = false
                 part.CFrame = CFrame.new(spawnPos, hrp.Position)
