@@ -305,24 +305,47 @@ NoticeTab:CreateParagraph({
     Content = ".gg/Tmby2GkKJR"
 })
 
--- GUI Toggles
+local AUTO_BLOCK_AUDIO_DELAY = 0.15
+local AUTO_BLOCK_ANIMATION_DELAY = 0.25
+
+-- 🔹 Toggle dulu
 AutoBlockTab:CreateToggle({
-    Name = "Auto Block (Animation)",
+    Name = "Enable AutoBlockAudio",
     CurrentValue = false,
-    Flag = "AutoBlockAnimation",
-    Callback = function(Value) 
-        autoBlockOn = Value 
+    Flag = "AutoBlockAudioToggle",
+    Callback = function(Value)
+        autoBlockAudioOn = Value
     end,
 })
 
--- Rayfield toggle for Auto Block (Audio)
 AutoBlockTab:CreateToggle({
-    Name = "Auto Block (Audio)",
+    Name = "Enable AutoBlockAnimation (Must be fixed)",
     CurrentValue = false,
-    Flag = "AutoBlockAudio",
-    Callback = function(state)
-        autoBlockAudioOn = state
+    Flag = "AutoBlockAnimationToggle",
+    Callback = function(Value)
+        autoBlockOn = Value
     end,
+})
+
+-- 🔹 Baru input delay di bawah
+AutoBlockTab:CreateInput({
+    Name = "AutoBlockAudio Delay (seconds)",
+    PlaceholderText = tostring(AUTO_BLOCK_AUDIO_DELAY),
+    RemoveTextAfterFocusLost = false,
+    Callback = function(Text)
+        local num = tonumber(Text)
+        if num then AUTO_BLOCK_AUDIO_DELAY = num end
+    end
+})
+
+AutoBlockTab:CreateInput({
+    Name = "AutoBlockAnimation Delay (seconds)",
+    PlaceholderText = tostring(AUTO_BLOCK_ANIMATION_DELAY),
+    RemoveTextAfterFocusLost = false,
+    Callback = function(Text)
+        local num = tonumber(Text)
+        if num then AUTO_BLOCK_ANIMATION_DELAY = num end
+    end
 })
 
 AutoBlockTab:CreateKeybind({
@@ -519,6 +542,22 @@ AutoBlockTab:CreateToggle({
         end
     end,
 })
+
+function PerformAutoBlockAudio()
+    if not autoBlockAudioOn then return end
+    task.spawn(function()
+        task.wait(AUTO_BLOCK_AUDIO_DELAY)
+        fireGuiBlock()  -- atau fireGuiCharge() / fireGuiClone()
+    end)
+end
+
+function PerformAutoBlockAnimation()
+    if not autoBlockOn then return end
+    task.spawn(function()
+        task.wait(AUTO_BLOCK_ANIMATION_DELAY)
+        fireGuiBlock()  -- atau fireGuiCharge() / fireGuiClone()
+    end)
+end
 
 -- make sure AutoBlockTab is a valid Rayfield tab object
 AutoBlockTab:CreateSection("Change Type Block")
