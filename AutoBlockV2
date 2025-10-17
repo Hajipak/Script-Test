@@ -106,6 +106,8 @@ local nextAudioBlockTime = 0
 local floatingGuiAudio = nil
 local floatingGuiAnim = nil
 local doubleblocktech = false
+local lastPunchTime = 0
+local punchDebounce = 0.3
 local looseFacing = true
 local detectionRange = 18
 local messageWhenAutoBlockOn = false
@@ -2714,16 +2716,19 @@ task.spawn(function()
     end
 end)
 
--- double-punch tech detection
--- Replacement double-punch detection (safer + debounced)
+--------------------------------------------------
+-- DOUBLE-PUNCH TECH DETECTION (FIXED & DEBOUNCED)
+--------------------------------------------------
 local _REFRESH_UI_IF_NIL = true
 local TRACK_DEBOUNCE = 0.45   -- seconds to avoid retriggering same track
 local START_WINDOW = 0     -- consider a track "starting" if TimePosition <= START_WINDOW
+local trackLastTriggered = {}
 
 local trackLastTriggered = setmetatable({}, { __mode = "k" }) -- weak keys (AnimationTrack -> last tick)
 
 RunService.RenderStepped:Connect(function()
     if not doubleblocktech then return end
+
     local char = lp and lp.Character
     if not char then return end
 
@@ -2733,9 +2738,10 @@ RunService.RenderStepped:Connect(function()
         refreshAnimator()
         animator = cachedAnimator
     end
+    if not animator then return end
 
-    -- ensure GUI refs fresh if missing (helps when GUI recreates)
-    if _REFRESH_UI_IF_NIL and (not cachedPunchBtn or not cachedCharges) and type(refreshUIRefs) == "function" then
+    if _REFRESH_UI_IF_NIL and (not cachedPunchBtn or not cachedCharges)
+        and type(refreshUIRefs) == "function" then
         pcall(refreshUIRefs)
     end
 
@@ -2744,23 +2750,23 @@ RunService.RenderStepped:Connect(function()
             local a = track.Animation
             return a and tostring(a.AnimationId):match("%d+")
         end)
+
         if ok and animId and table.find(blockAnimIds, animId) then
-            -- safe read of time position
             local timePos = 0
             pcall(function() timePos = track.TimePosition or 0 end)
 
-            -- only trigger when the track is just starting (helps with timing)
+            local last = trackLastTriggered[animId]
             if timePos <= START_WINDOW then
-                local last = trackLastTriggered[track]
                 if not last or (tick() - last) >= TRACK_DEBOUNCE then
-                    trackLastTriggered[track] = tick()
-                    -- extra safety: ensure punch button exists before trying
-                    if cachedPunchBtn == nil and type(refreshUIRefs) == "function" then
+                    trackLastTriggered[animId] = tick()
+
+                    if _REFRESH_UI_IF_NIL
+                        and (not cachedPunchBtn or not cachedCharges)
+                        and type(refreshUIRefs) == "function" then
                         pcall(refreshUIRefs)
                     end
 
-                    -- try GUI-based punch activation (this function already handles safety)
-                    print("trying to punch")
+                    print("[DoublePunch] Punch triggered once for animId:", animId)
                     pcall(fireGuiPunch)
                 end
             end
@@ -2845,7 +2851,9 @@ task.spawn(function()
     end
 end)
 
--- Auto block + punch detection loop
+-----------------------------------------------------
+-- AUTO BLOCK + PUNCH DETECTION LOOP (FIXED VERSION)
+-----------------------------------------------------
 RunService.RenderStepped:Connect(function()
     local gui = PlayerGui:FindFirstChild("MainUI")
     local punchBtn = gui and gui:FindFirstChild("AbilityContainer") and gui.AbilityContainer:FindFirstChild("Punch")
@@ -2857,14 +2865,16 @@ RunService.RenderStepped:Connect(function()
     if not myChar then return end
     local myRoot = myChar:FindFirstChild("HumanoidRootPart")
     Humanoid = myChar:FindFirstChildOfClass("Humanoid")
-        -- Auto Block: Trigger block if a valid animation is played by a killer
+    if not myRoot or not Humanoid then return end
+
     for _, plr in ipairs(Players:GetPlayers()) do
         if plr ~= lp and plr.Character then
             local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
             local hum = plr.Character:FindFirstChildOfClass("Humanoid")
-            local animTracks = hum and hum:FindFirstChildOfClass("Animator") and hum:FindFirstChildOfClass("Animator"):GetPlayingAnimationTracks()
+            local animator = hum and hum:FindFirstChildOfClass("Animator")
+            local animTracks = animator and animator:GetPlayingAnimationTracks()
 
-            if hrp and myRoot and (hrp.Position - myRoot.Position).Magnitude <= detectionRange then
+            if hrp and (hrp.Position - myRoot.Position).Magnitude <= detectionRange then
                 for _, track in ipairs(animTracks or {}) do
                     local id = tostring(track.Animation.AnimationId):match("%d+")
                     if table.find(autoBlockTriggerAnims, id) then
@@ -2873,8 +2883,12 @@ RunService.RenderStepped:Connect(function()
                                 if cooldown and cooldown.Text == "" then
                                     fireRemoteBlock()
                                 end
-                                if doubleblocktech == true and charges and charges.Text == "1" then
-                                    fireRemotePunch()
+                                if doubleblocktech and charges and charges.Text == "1" then
+                                    if tick() - lastPunchTime >= punchDebounce then
+                                        lastPunchTime = tick()
+                                        fireRemotePunch()
+                                        print("[AutoBlock] Double punch triggered once")
+                                    end
                                 end
                             end
                         end
@@ -2883,6 +2897,7 @@ RunService.RenderStepped:Connect(function()
             end
         end
     end
+end)
 
     -- Detect if player is playing a block animation, and blockTP is enabled
 
