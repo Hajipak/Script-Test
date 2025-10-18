@@ -2873,8 +2873,8 @@ RunService.RenderStepped:Connect(function()
                                 if cooldown and cooldown.Text == "" then
                                     fireRemoteBlock()
                                 end
-                                if doubleblocktech == true and charges and charges.Text == "1" then
-                                    fireRemotePunch()
+                                if doubleblocktech and cachedCharges and cachedCharges.Text == "1" then
+                                   fireGuiPunch()
                                 end
                             end
                         end
