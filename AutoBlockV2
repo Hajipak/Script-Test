@@ -106,6 +106,7 @@ local nextAudioBlockTime = 0
 local floatingGuiAudio = nil
 local floatingGuiAnim = nil
 local doubleblocktech = false
+local doublePunchAudio = false
 local looseFacing = true
 local detectionRange = 18
 local messageWhenAutoBlockOn = false
@@ -973,7 +974,7 @@ BDTab:CreateInput({
     Callback = function(text)
         local num = tonumber(text)
         if num then
-            antiFlickDelay = math.max(0, num) -- donÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢t allow negative
+            antiFlickDelay = math.max(0, num) -- donÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢t allow negative
         end
     end,
 })
@@ -1082,7 +1083,7 @@ BDTab:CreateInput({
     Callback = function(text)
         local num = tonumber(text)
         if num then
-            stagger = math.max(0, num) -- donÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢t allow negative
+            stagger = math.max(0, num) -- donÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢t allow negative
         end
     end,
 })
@@ -1097,7 +1098,7 @@ BDTab:CreateInput({
     Callback = function(text)
         local num = tonumber(text)
         if num then
-            antiFlickBaseOffset = math.max(0, num) -- donÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢t allow negative
+            antiFlickBaseOffset = math.max(0, num) -- donÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢t allow negative
         end
     end,
 })
@@ -1132,17 +1133,26 @@ BDTab:CreateInput({
             BD_PART_TRANSPARENCY = num
             print("[BD] Part Transparency set to:", num)
         else
-            warn("[BD] Invalid transparency value (must be 0Ã¢â‚¬â€œ1)")
+            warn("[BD] Invalid transparency value (must be 0â€“1)")
         end
     end
 })
 
 TechTab:CreateToggle({
-    Name = "Double Punch Tech",
+    Name = "Double Punch Tech (Animation)",
     CurrentValue = false,
     Flag = "doubleblockTechtoggle",
     Callback = function(state)
         doubleblocktech = state
+    end,
+})
+
+TechTab:CreateToggle({
+    Name = "Double Punch (Audio)",
+    CurrentValue = false,
+    Flag = "DoublePunchAudioToggle",
+    Callback = function(state)
+        doublePunchAudio = state
     end,
 })
 
@@ -1255,11 +1265,11 @@ FakeBlockTab:CreateButton({
                     return loadstring(game:HttpGet("https://raw.githubusercontent.com/skibidi399/Auto-block-script/refs/heads/main/fakeblock"))()
                 end)
                 if not success then
-                    warn("ÃƒÆ’Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒâ€¦Ã¢â‚¬â„¢ Failed to load Fake Block GUI:", result)
+                    warn("ÃƒÂ¢Ã‚ÂÃ…â€™ Failed to load Fake Block GUI:", result)
                 end
             else
                 fakeGui.Enabled = true
-                print("ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã¢â‚¬Å“ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ Fake Block GUI enabled")
+                print("ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ Fake Block GUI enabled")
             end
         end)
     end
@@ -1639,7 +1649,7 @@ local function addESP(obj)
     if not obj:FindFirstChild("HumanoidRootPart") then return end
 
     local plr = Players:GetPlayerFromCharacter(obj)
-    if not plr then return end -- ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã¢â‚¬Å“ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ only add ESP if it's a player character
+    if not plr then return end -- ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ only add ESP if it's a player character
 
     -- Prevent duplicates
     if obj:FindFirstChild("ESP_Highlight") then return end
@@ -1786,7 +1796,7 @@ local function playCustomAnim(animId, isPunch)
     end)
 
     if success and track then
-        print("ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã¢â‚¬Å“ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ Playing custom " .. (isPunch and "punch" or "block") .. " animation:", animId)
+        print("ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ Playing custom " .. (isPunch and "punch" or "block") .. " animation:", animId)
         track:Play()
         if isPunch then
             lastPunchTime = now
@@ -1794,7 +1804,7 @@ local function playCustomAnim(animId, isPunch)
             lastBlockTime = now
         end
     else
-        warn("ÃƒÆ’Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒâ€¦Ã¢â‚¬â„¢ Failed to load or play custom animation: " .. animId)
+        warn("ÃƒÂ¢Ã‚ÂÃ…â€™ Failed to load or play custom animation: " .. animId)
     end
 end
 
@@ -2027,21 +2037,43 @@ local function tryActivateButton(btn)
     return true
 end
 
--- Replace previous fireRemoteBlock / fireRemotePunch with these:
+-- === Fungsi Baru: Double Punch untuk Audio ===
+local function tryDoublePunchAfterAudioBlock()
+    if not doublePunchAudio then return end
+    if not autoBlockAudioOn then return end
+
+    if not cachedPunchBtn or not cachedCharges then
+        refreshUIRefs()
+    end
+
+    if not cachedCharges or cachedCharges.Text ~= "1" then
+        return
+    end
+
+    local punchCooldown = cachedPunchBtn and cachedPunchBtn:FindFirstChild("CooldownTime")
+    if punchCooldown and punchCooldown.Text ~= "" then
+        return
+    end
+
+    task.delay(0.05, function()
+        if doublePunchAudio and autoBlockAudioOn then
+            fireGuiPunch()
+        end
+    end)
+end
+
+-- === Helper Functions (sudah ada di file asli, pastikan fireGuiPunch ada) ===
 local function fireGuiBlock()
-    if cachedBlockBtn and tryActivateButton(cachedBlockBtn) then return end
+    if cachedBlockBtn then pcall(function() cachedBlockBtn:Activate() end) end
 end
-
 local function fireGuiPunch()
-    if cachedPunchBtn and tryActivateButton(cachedPunchBtn) then return end
+    if cachedPunchBtn then pcall(function() cachedPunchBtn:Activate() end) end
 end
-
 local function fireGuiCharge()
-    if cachedChargeBtn and tryActivateButton(cachedChargeBtn) then return end
+    if cachedChargeBtn then pcall(function() cachedChargeBtn:Activate() end) end
 end
-
 local function fireGuiClone()
-    if cachedCloneBtn and tryActivateButton(cachedCloneBtn) then return end
+    if cachedCloneBtn then pcall(function() cachedCloneBtn:Activate() end) end
 end
 
 local chargeAimActive = false
@@ -2269,21 +2301,19 @@ local function _attemptForSound(sound, idParam, mode)
             task.spawn(function()
                 task.wait(BD_AUDIO_PERFORM_DELAY or 0)
                 fireGuiBlock()
+                tryDoublePunchAfterAudioBlock()  -- ✅ Tambahkan di sini
             end)
         else
-            local now = tick()
             local chosenDelay = tonumber(autoBlockAudioDelay) or 0
-
             if now >= nextAudioBlockTime then
                 nextAudioBlockTime = now + chosenDelay
                 task.spawn(function()
                     if chosenDelay > 0 then
                         local startT = tick()
-                        while tick() - startT < chosenDelay do
-                            task.wait()
-                        end
+                        while tick() - startT < chosenDelay do task.wait() end
                     end
                     fireGuiBlock()
+                    tryDoublePunchAfterAudioBlock()  -- ✅ Tambahkan di sini
                 end)
             end
         end
@@ -2325,7 +2355,7 @@ local function attemptCloneForSound(sound, idParam)
 end
 
 -- ================================================================
--- Ã°Å¸Å¸Â¦ Fungsi utama Better Detection (attemptBDParts)
+-- ðŸŸ¦ Fungsi utama Better Detection (attemptBDParts)
 -- ================================================================
 
 local function attemptBDParts(sound)
@@ -2430,7 +2460,7 @@ local function attemptBDParts(sound)
                 if blocked then
                     if not (facingCheckEnabled and not isFacing(myRoot, hrp)) then
 
-                        -- Ã°Å¸Å¸Â¨ Delay sebelum block dilakukan
+                        -- ðŸŸ¨ Delay sebelum block dilakukan
                         if BD_AUDIO_PERFORM_DELAY and BD_AUDIO_PERFORM_DELAY > 0 then
                             task.wait(BD_AUDIO_PERFORM_DELAY)
                         end
