@@ -12,65 +12,6 @@ local ChatEvents = ReplicatedStorage:FindFirstChild("DefaultChatSystemChatEvents
 local SayMessageRequest = ChatEvents and ChatEvents:FindFirstChild("SayMessageRequest")
 local UserInputService = game:GetService("UserInputService")
 
-local function makeDraggableUniversal(frame)
-	local dragging = false
-	local dragStart, startPos
-	local activeTouchId = nil -- simpan ID jari aktif untuk mobile
-
-	local function update(input)
-		local delta = input.Position - dragStart
-		frame.Position = UDim2.new(
-			startPos.X.Scale,
-			startPos.X.Offset + delta.X,
-			startPos.Y.Scale,
-			startPos.Y.Offset + delta.Y
-		)
-	end
-
-	frame.InputBegan:Connect(function(input)
-		-- 📱 Jika user HP (Touch Input)
-		if input.UserInputType == Enum.UserInputType.Touch then
-			if not activeTouchId then
-				activeTouchId = input.TouchId
-				dragging = true
-				dragStart = input.Position
-				startPos = frame.Position
-
-				input.Changed:Connect(function()
-					if input.UserInputState == Enum.UserInputState.End then
-						if activeTouchId == input.TouchId then
-							dragging = false
-							activeTouchId = nil
-						end
-					end
-				end)
-			end
-
-		-- 🖱️ Jika user PC (Mouse Input)
-		elseif input.UserInputType == Enum.UserInputType.MouseButton1 then
-			dragging = true
-			dragStart = input.Position
-			startPos = frame.Position
-			input.Changed:Connect(function()
-				if input.UserInputState == Enum.UserInputState.End then
-					dragging = false
-				end
-			end)
-		end
-	end)
-
-	UserInputService.InputChanged:Connect(function(input)
-		-- 📱 Mobile drag (jari yang sedang aktif)
-		if dragging and input.UserInputType == Enum.UserInputType.Touch and input.TouchId == activeTouchId then
-			update(input)
-		end
-		-- 🖱️ PC drag (mouse)
-		if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-			update(input)
-		end
-	end)
-end
-
 -- Place in ReplicatedFirst (LocalScript
 
 -- Continue script 
@@ -434,123 +375,167 @@ AutoBlockTab:CreateParagraph({
 AutoBlockTab:CreateSection("AutoBlockAudio Controls")
 
 AutoBlockTab:CreateToggle({
-	Name = "Enable AutoBlockAudio + Floating Toggle",
-	CurrentValue = false,
-	Flag = "AutoBlockAudioToggle",
-	Callback = function(Value)
-		autoBlockAudioOn = Value
-		if Value then
-			print("[AutoBlockAudio] Enabled")
-			game.StarterGui:SetCore("SendNotification", {
-				Title = "AutoBlock Audio",
-				Text = "Enabled",
-				Duration = 2
-			})
+    Name = "Enable AutoBlockAudio + Floating Toggle",
+    CurrentValue = false,
+    Flag = "AutoBlockAudioToggle",
+    Callback = function(Value)
+        autoBlockAudioOn = Value
+        if Value then
+            print("[AutoBlockAudio] Enabled")
+            game.StarterGui:SetCore("SendNotification", {
+                Title = "AutoBlock Audio",
+                Text = "Enabled",
+                Duration = 2
+            })
 
-			-- Buat Floating Button Audio
-			floatingGuiAudio = Instance.new("ScreenGui")
-			floatingGuiAudio.Name = "FloatingAutoBlockAudio"
-			floatingGuiAudio.ResetOnSpawn = false
-			floatingGuiAudio.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-			floatingGuiAudio.Parent = game:GetService("CoreGui")
+            -- Buat Floating Button untuk Audio
+            floatingGuiAudio = Instance.new("ScreenGui")
+            floatingGuiAudio.Name = "FloatingAutoBlockAudio"
+            floatingGuiAudio.ResetOnSpawn = false
+            floatingGuiAudio.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+            floatingGuiAudio.Parent = game:GetService("CoreGui")
 
-			local Button = Instance.new("TextButton")
-			Button.Size = UDim2.new(0, 150, 0, 45)
-			Button.Position = UDim2.new(1, -170, 1, -160)
-			Button.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-			Button.TextColor3 = Color3.fromRGB(255, 255, 255)
-			Button.TextSize = 16
-			Button.Font = Enum.Font.GothamBold
-			Button.Text = "Audio: ON"
-			Button.Parent = floatingGuiAudio
+            local Button = Instance.new("TextButton")
+            Button.Size = UDim2.new(0, 150, 0, 45)
+            Button.Position = UDim2.new(1, -170, 1, -160)
+            Button.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+            Button.TextColor3 = Color3.fromRGB(255, 255, 255)
+            Button.TextSize = 16
+            Button.Font = Enum.Font.GothamBold
+            Button.Text = "Audio: ON"
+            Button.Parent = floatingGuiAudio
 
-			-- ✅ Aktifkan drag universal
-			makeDraggableUniversal(Button)
+            local dragging = false
+            local dragStart, startPos
+            local UIS = game:GetService("UserInputService")
 
-			Button.MouseButton1Click:Connect(function()
-				autoBlockAudioOn = not autoBlockAudioOn
-				Button.Text = autoBlockAudioOn and "Audio: ON" or "Audio: OFF"
-				game.StarterGui:SetCore("SendNotification", {
-					Title = "AutoBlock Audio",
-					Text = autoBlockAudioOn and "Enabled" or "Disabled",
-					Duration = 2
-				})
-			end)
+            Button.InputBegan:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                    dragging = true
+                    dragStart = input.Position
+                    startPos = Button.Position
+                end
+            end)
 
-		else
-			print("[AutoBlockAudio] Disabled")
-			game.StarterGui:SetCore("SendNotification", {
-				Title = "AutoBlock Audio",
-				Text = "Disabled",
-				Duration = 2
-			})
-			if floatingGuiAudio then
-				floatingGuiAudio:Destroy()
-				floatingGuiAudio = nil
-			end
-		end
-	end,
+            UIS.InputChanged:Connect(function(input)
+                if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+                    local delta = input.Position - dragStart
+                    Button.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+                end
+            end)
+
+            UIS.InputEnded:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                    dragging = false
+                end
+            end)
+
+            Button.MouseButton1Click:Connect(function()
+                autoBlockAudioOn = not autoBlockAudioOn
+                Button.Text = autoBlockAudioOn and "Audio: ON" or "Audio: OFF"
+                game.StarterGui:SetCore("SendNotification", {
+                    Title = "AutoBlock Audio",
+                    Text = autoBlockAudioOn and "Enabled" or "Disabled",
+                    Duration = 2
+                })
+            end)
+
+        else
+            print("[AutoBlockAudio] Disabled")
+            game.StarterGui:SetCore("SendNotification", {
+                Title = "AutoBlock Audio",
+                Text = "Disabled",
+                Duration = 2
+            })
+            if floatingGuiAudio then
+                floatingGuiAudio:Destroy()
+                floatingGuiAudio = nil
+            end
+        end
+    end,
 })
 
 AutoBlockTab:CreateSection("AutoBlockAnimation Controls")
 
 AutoBlockTab:CreateToggle({
-	Name = "Enable AutoBlockAnimation + Floating Toggle",
-	CurrentValue = false,
-	Flag = "AutoBlockAnimationToggle",
-	Callback = function(Value)
-		autoBlockOn = Value
-		if Value then
-			print("[AutoBlockAnimation] Enabled")
-			game.StarterGui:SetCore("SendNotification", {
-				Title = "AutoBlock Animation",
-				Text = "Enabled",
-				Duration = 2
-			})
+    Name = "Enable AutoBlockAnimation + Floating Toggle",
+    CurrentValue = false,
+    Flag = "AutoBlockAnimationToggle",
+    Callback = function(Value)
+        autoBlockOn = Value
+        if Value then
+            print("[AutoBlockAnimation] Enabled")
+            game.StarterGui:SetCore("SendNotification", {
+                Title = "AutoBlock Animation",
+                Text = "Enabled",
+                Duration = 2
+            })
 
-			-- Buat Floating Button Animation
-			floatingGuiAnim = Instance.new("ScreenGui")
-			floatingGuiAnim.Name = "FloatingAutoBlockAnimation"
-			floatingGuiAnim.ResetOnSpawn = false
-			floatingGuiAnim.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-			floatingGuiAnim.Parent = game:GetService("CoreGui")
+            -- Buat Floating Button untuk Animation
+            floatingGuiAnim = Instance.new("ScreenGui")
+            floatingGuiAnim.Name = "FloatingAutoBlockAnimation"
+            floatingGuiAnim.ResetOnSpawn = false
+            floatingGuiAnim.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+            floatingGuiAnim.Parent = game:GetService("CoreGui")
 
-			local Button = Instance.new("TextButton")
-			Button.Size = UDim2.new(0, 150, 0, 45)
-			Button.Position = UDim2.new(1, -170, 1, -100)
-			Button.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-			Button.TextColor3 = Color3.fromRGB(255, 255, 255)
-			Button.TextSize = 16
-			Button.Font = Enum.Font.GothamBold
-			Button.Text = "Animation: ON"
-			Button.Parent = floatingGuiAnim
+            local Button = Instance.new("TextButton")
+            Button.Size = UDim2.new(0, 150, 0, 45)
+            Button.Position = UDim2.new(1, -170, 1, -100)
+            Button.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+            Button.TextColor3 = Color3.fromRGB(255, 255, 255)
+            Button.TextSize = 16
+            Button.Font = Enum.Font.GothamBold
+            Button.Text = "Animation: ON"
+            Button.Parent = floatingGuiAnim
 
-			-- ✅ Aktifkan drag universal
-			makeDraggableUniversal(Button)
+            local dragging = false
+            local dragStart, startPos
+            local UIS = game:GetService("UserInputService")
 
-			Button.MouseButton1Click:Connect(function()
-				autoBlockOn = not autoBlockOn
-				Button.Text = autoBlockOn and "Animation: ON" or "Animation: OFF"
-				game.StarterGui:SetCore("SendNotification", {
-					Title = "AutoBlock Animation",
-					Text = autoBlockOn and "Enabled" or "Disabled",
-					Duration = 2
-				})
-			end)
+            Button.InputBegan:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                    dragging = true
+                    dragStart = input.Position
+                    startPos = Button.Position
+                end
+            end)
 
-		else
-			print("[AutoBlockAnimation] Disabled")
-			game.StarterGui:SetCore("SendNotification", {
-				Title = "AutoBlock Animation",
-				Text = "Disabled",
-				Duration = 2
-			})
-			if floatingGuiAnim then
-				floatingGuiAnim:Destroy()
-				floatingGuiAnim = nil
-			end
-		end
-	end,
+            UIS.InputChanged:Connect(function(input)
+                if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+                    local delta = input.Position - dragStart
+                    Button.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+                end
+            end)
+
+            UIS.InputEnded:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                    dragging = false
+                end
+            end)
+
+            Button.MouseButton1Click:Connect(function()
+                autoBlockOn = not autoBlockOn
+                Button.Text = autoBlockOn and "Animation: ON" or "Animation: OFF"
+                game.StarterGui:SetCore("SendNotification", {
+                    Title = "AutoBlock Animation",
+                    Text = autoBlockOn and "Enabled" or "Disabled",
+                    Duration = 2
+                })
+            end)
+
+        else
+            print("[AutoBlockAnimation] Disabled")
+            game.StarterGui:SetCore("SendNotification", {
+                Title = "AutoBlock Animation",
+                Text = "Disabled",
+                Duration = 2
+            })
+            if floatingGuiAnim then
+                floatingGuiAnim:Destroy()
+                floatingGuiAnim = nil
+            end
+        end
+    end,
 })
 
 -- make sure AutoBlockTab is a valid Rayfield tab object
@@ -988,7 +973,7 @@ BDTab:CreateInput({
     Callback = function(text)
         local num = tonumber(text)
         if num then
-            antiFlickDelay = math.max(0, num) -- donÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢t allow negative
+            antiFlickDelay = math.max(0, num) -- donÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¾ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢t allow negative
         end
     end,
 })
@@ -1097,7 +1082,7 @@ BDTab:CreateInput({
     Callback = function(text)
         local num = tonumber(text)
         if num then
-            stagger = math.max(0, num) -- donÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢t allow negative
+            stagger = math.max(0, num) -- donÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¾ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢t allow negative
         end
     end,
 })
@@ -1112,7 +1097,7 @@ BDTab:CreateInput({
     Callback = function(text)
         local num = tonumber(text)
         if num then
-            antiFlickBaseOffset = math.max(0, num) -- donÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢t allow negative
+            antiFlickBaseOffset = math.max(0, num) -- donÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¾ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢t allow negative
         end
     end,
 })
@@ -1147,7 +1132,7 @@ BDTab:CreateInput({
             BD_PART_TRANSPARENCY = num
             print("[BD] Part Transparency set to:", num)
         else
-            warn("[BD] Invalid transparency value (must be 0ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“1)")
+            warn("[BD] Invalid transparency value (must be 0ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œ1)")
         end
     end
 })
@@ -1270,11 +1255,11 @@ FakeBlockTab:CreateButton({
                     return loadstring(game:HttpGet("https://raw.githubusercontent.com/skibidi399/Auto-block-script/refs/heads/main/fakeblock"))()
                 end)
                 if not success then
-                    warn("ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã¢â‚¬Â¦ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ Failed to load Fake Block GUI:", result)
+                    warn("ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ Failed to load Fake Block GUI:", result)
                 end
             else
                 fakeGui.Enabled = true
-                print("ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã¢â‚¬Â¦ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¦ Fake Block GUI enabled")
+                print("ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã¢â‚¬Å“ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦ Fake Block GUI enabled")
             end
         end)
     end
@@ -1654,7 +1639,7 @@ local function addESP(obj)
     if not obj:FindFirstChild("HumanoidRootPart") then return end
 
     local plr = Players:GetPlayerFromCharacter(obj)
-    if not plr then return end -- ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã¢â‚¬Â¦ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¦ only add ESP if it's a player character
+    if not plr then return end -- ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã¢â‚¬Å“ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦ only add ESP if it's a player character
 
     -- Prevent duplicates
     if obj:FindFirstChild("ESP_Highlight") then return end
@@ -1801,7 +1786,7 @@ local function playCustomAnim(animId, isPunch)
     end)
 
     if success and track then
-        print("ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã¢â‚¬Â¦ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¦ Playing custom " .. (isPunch and "punch" or "block") .. " animation:", animId)
+        print("ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã¢â‚¬Å“ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦ Playing custom " .. (isPunch and "punch" or "block") .. " animation:", animId)
         track:Play()
         if isPunch then
             lastPunchTime = now
@@ -1809,7 +1794,7 @@ local function playCustomAnim(animId, isPunch)
             lastBlockTime = now
         end
     else
-        warn("ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã¢â‚¬Â¦ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ Failed to load or play custom animation: " .. animId)
+        warn("ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ Failed to load or play custom animation: " .. animId)
     end
 end
 
@@ -2346,7 +2331,7 @@ local function attemptCloneForSound(sound, idParam)
 end
 
 -- ================================================================
--- ÃƒÂ°Ã…Â¸Ã…Â¸Ã‚Â¦ Fungsi utama Better Detection (attemptBDParts)
+-- ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€¦Ã‚Â¸Ãƒâ€šÃ‚Â¦ Fungsi utama Better Detection (attemptBDParts)
 -- ================================================================
 
 local function attemptBDParts(sound)
@@ -2451,7 +2436,7 @@ local function attemptBDParts(sound)
                 if blocked then
                     if not (facingCheckEnabled and not isFacing(myRoot, hrp)) then
 
-                        -- ÃƒÂ°Ã…Â¸Ã…Â¸Ã‚Â¨ Delay sebelum block dilakukan
+                        -- ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€¦Ã‚Â¸Ãƒâ€šÃ‚Â¨ Delay sebelum block dilakukan
                         if BD_AUDIO_PERFORM_DELAY and BD_AUDIO_PERFORM_DELAY > 0 then
                             task.wait(BD_AUDIO_PERFORM_DELAY)
                         end
