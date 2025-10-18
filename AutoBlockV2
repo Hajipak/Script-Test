@@ -372,23 +372,16 @@ AutoBlockTab:CreateParagraph({
     Content = "Use the keybind above to toggle Auto Block Audio with your controller."
 })
 
-AutoBlockTab:CreateSection("AutoBlockAudio Controls")
+AutoBlockTab:CreateSection("AutoBlock Control Floating")
 
+-- Floating Toggle Audio
 AutoBlockTab:CreateToggle({
-    Name = "Enable AutoBlockAudio + Floating Toggle",
+    Name = "Enable AutoBlockAudio + Floating Button",
     CurrentValue = false,
-    Flag = "AutoBlockAudioToggle",
+    Flag = "AutoBlockAudioFloating",
     Callback = function(Value)
         autoBlockAudioOn = Value
         if Value then
-            print("[AutoBlockAudio] Enabled")
-            game.StarterGui:SetCore("SendNotification", {
-                Title = "AutoBlock Audio",
-                Text = "Enabled",
-                Duration = 2
-            })
-
-            -- Buat Floating Button untuk Audio
             floatingGuiAudio = Instance.new("ScreenGui")
             floatingGuiAudio.Name = "FloatingAutoBlockAudio"
             floatingGuiAudio.ResetOnSpawn = false
@@ -405,48 +398,54 @@ AutoBlockTab:CreateToggle({
             Button.Text = "Audio: ON"
             Button.Parent = floatingGuiAudio
 
-            local dragging = false
-            local dragStart, startPos
+            -- ✅ FIXED DRAG LOGIC
             local UIS = game:GetService("UserInputService")
+            local dragging, dragInput, dragStart, startPos
+
+            local function updateDrag(input)
+                local delta = input.Position - dragStart
+                Button.Position = UDim2.new(
+                    startPos.X.Scale, startPos.X.Offset + delta.X,
+                    startPos.Y.Scale, startPos.Y.Offset + delta.Y
+                )
+            end
 
             Button.InputBegan:Connect(function(input)
                 if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                     dragging = true
                     dragStart = input.Position
                     startPos = Button.Position
+
+                    input.Changed:Connect(function()
+                        if input.UserInputState == Enum.UserInputState.End then
+                            dragging = false
+                        end
+                    end)
+                end
+            end)
+
+            Button.InputChanged:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+                    dragInput = input
                 end
             end)
 
             UIS.InputChanged:Connect(function(input)
-                if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-                    local delta = input.Position - dragStart
-                    Button.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-                end
-            end)
-
-            UIS.InputEnded:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                    dragging = false
+                if input == dragInput and dragging then
+                    updateDrag(input)
                 end
             end)
 
             Button.MouseButton1Click:Connect(function()
                 autoBlockAudioOn = not autoBlockAudioOn
                 Button.Text = autoBlockAudioOn and "Audio: ON" or "Audio: OFF"
-                game.StarterGui:SetCore("SendNotification", {
+                StarterGui:SetCore("SendNotification", {
                     Title = "AutoBlock Audio",
                     Text = autoBlockAudioOn and "Enabled" or "Disabled",
                     Duration = 2
                 })
             end)
-
         else
-            print("[AutoBlockAudio] Disabled")
-            game.StarterGui:SetCore("SendNotification", {
-                Title = "AutoBlock Audio",
-                Text = "Disabled",
-                Duration = 2
-            })
             if floatingGuiAudio then
                 floatingGuiAudio:Destroy()
                 floatingGuiAudio = nil
@@ -455,23 +454,14 @@ AutoBlockTab:CreateToggle({
     end,
 })
 
-AutoBlockTab:CreateSection("AutoBlockAnimation Controls")
-
+-- Floating Toggle Animation
 AutoBlockTab:CreateToggle({
-    Name = "Enable AutoBlockAnimation + Floating Toggle",
+    Name = "Enable AutoBlockAnimation + Floating Button",
     CurrentValue = false,
-    Flag = "AutoBlockAnimationToggle",
+    Flag = "AutoBlockAnimationFloating",
     Callback = function(Value)
         autoBlockOn = Value
         if Value then
-            print("[AutoBlockAnimation] Enabled")
-            game.StarterGui:SetCore("SendNotification", {
-                Title = "AutoBlock Animation",
-                Text = "Enabled",
-                Duration = 2
-            })
-
-            -- Buat Floating Button untuk Animation
             floatingGuiAnim = Instance.new("ScreenGui")
             floatingGuiAnim.Name = "FloatingAutoBlockAnimation"
             floatingGuiAnim.ResetOnSpawn = false
@@ -488,48 +478,54 @@ AutoBlockTab:CreateToggle({
             Button.Text = "Animation: ON"
             Button.Parent = floatingGuiAnim
 
-            local dragging = false
-            local dragStart, startPos
+            -- ✅ FIXED DRAG LOGIC
             local UIS = game:GetService("UserInputService")
+            local dragging, dragInput, dragStart, startPos
+
+            local function updateDrag(input)
+                local delta = input.Position - dragStart
+                Button.Position = UDim2.new(
+                    startPos.X.Scale, startPos.X.Offset + delta.X,
+                    startPos.Y.Scale, startPos.Y.Offset + delta.Y
+                )
+            end
 
             Button.InputBegan:Connect(function(input)
                 if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                     dragging = true
                     dragStart = input.Position
                     startPos = Button.Position
+
+                    input.Changed:Connect(function()
+                        if input.UserInputState == Enum.UserInputState.End then
+                            dragging = false
+                        end
+                    end)
+                end
+            end)
+
+            Button.InputChanged:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+                    dragInput = input
                 end
             end)
 
             UIS.InputChanged:Connect(function(input)
-                if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-                    local delta = input.Position - dragStart
-                    Button.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-                end
-            end)
-
-            UIS.InputEnded:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                    dragging = false
+                if input == dragInput and dragging then
+                    updateDrag(input)
                 end
             end)
 
             Button.MouseButton1Click:Connect(function()
                 autoBlockOn = not autoBlockOn
                 Button.Text = autoBlockOn and "Animation: ON" or "Animation: OFF"
-                game.StarterGui:SetCore("SendNotification", {
+                StarterGui:SetCore("SendNotification", {
                     Title = "AutoBlock Animation",
                     Text = autoBlockOn and "Enabled" or "Disabled",
                     Duration = 2
                 })
             end)
-
         else
-            print("[AutoBlockAnimation] Disabled")
-            game.StarterGui:SetCore("SendNotification", {
-                Title = "AutoBlock Animation",
-                Text = "Disabled",
-                Duration = 2
-            })
             if floatingGuiAnim then
                 floatingGuiAnim:Destroy()
                 floatingGuiAnim = nil
