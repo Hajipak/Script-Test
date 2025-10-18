@@ -2269,6 +2269,9 @@ local function _attemptForSound(sound, idParam, mode)
             task.spawn(function()
                 task.wait(BD_AUDIO_PERFORM_DELAY or 0)
                 fireGuiBlock()
+                if doubleblocktech and cachedCharges and cachedCharges.Text == "1" then
+                    fireGuiPunch()
+                end
             end)
         else
             local now = tick()
@@ -2284,6 +2287,9 @@ local function _attemptForSound(sound, idParam, mode)
                         end
                     end
                     fireGuiBlock()
+                    if doubleblocktech and cachedCharges and cachedCharges.Text == "1" then
+                        fireGuiPunch()
+                    end
                 end)
             end
         end
@@ -2438,6 +2444,9 @@ local function attemptBDParts(sound)
                         -- Lakukan block sesuai mode
                         if autoblocktype == "Block" then
                             fireGuiBlock()
+                            if doubleblocktech and cachedCharges and cachedCharges.Text == "1" then
+                                fireGuiPunch()
+                            end
                         elseif autoblocktype == "Charge" then
                             fireGuiCharge()
                         elseif autoblocktype == "7n7 Clone" then
