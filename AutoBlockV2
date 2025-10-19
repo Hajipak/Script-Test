@@ -974,6 +974,26 @@ BDTab:CreateInput({
     end,
 })
 
+BDTab:CreateParagraph({
+    Title = "Recommended Delay Values",
+    Content = [[
+Coolkidd: 0.1ms
+recommend: 0ms
+
+Jason / Slasher: 0.2ms
+recommend: 0.1ms / 0ms
+
+John Doe: 0.4ms
+recommend: 0.35ms / 0.3ms
+
+Noli: 0.35ms
+recommend: 0.3ms
+
+1x4: 0.4ms
+recommend: 0.35ms / 0.3ms
+    ]]
+})
+
 -- ===== auto-adjust DBTFBPS based on killer (drop this after KillersFolder / BD inputs) =====
 
 local function getNearestKillerModel()
