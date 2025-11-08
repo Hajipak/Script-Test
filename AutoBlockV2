@@ -1168,6 +1168,113 @@ BDTab:CreateInput({
     end
 })
 
+-- === Base Part Size (default: 5.5, 7.5, 8.5) ===
+local bdBaseX, bdBaseY, bdBaseZ = 5.5, 7.5, 8.5
+
+-- === Behead (126355327951215) ===
+local bdBeheadX, bdBeheadY, bdBeheadZ = 5.5, 7.5, 8.5
+
+-- === GashingWound (121086746534252) ===
+local bdGashX, bdGashY, bdGashZ = 5.5, 7.5, 8.5
+
+-- Base Size Inputs
+BDTab:CreateInput({
+    Name = "Base Part Size X",
+    PlaceholderText = "5.5",
+    RemoveTextAfterFocusLost = false,
+    Flag = "BD_BaseX",
+    Callback = function(Text)
+        local num = tonumber(Text)
+        if num then bdBaseX = num end
+    end
+})
+BDTab:CreateInput({
+    Name = "Base Part Size Y",
+    PlaceholderText = "7.5",
+    RemoveTextAfterFocusLost = false,
+    Flag = "BD_BaseY",
+    Callback = function(Text)
+        local num = tonumber(Text)
+        if num then bdBaseY = num end
+    end
+})
+BDTab:CreateInput({
+    Name = "Base Part Size Z",
+    PlaceholderText = "8.5",
+    RemoveTextAfterFocusLost = false,
+    Flag = "BD_BaseZ",
+    Callback = function(Text)
+        local num = tonumber(Text)
+        if num then bdBaseZ = num end
+    end
+})
+
+-- Behead Size Inputs
+BDTab:CreateParagraph({ Title = "Behead (126355327951215)", Content = "" })
+BDTab:CreateInput({
+    Name = "Behead Size X",
+    PlaceholderText = "5.5",
+    RemoveTextAfterFocusLost = false,
+    Flag = "BD_BeheadX",
+    Callback = function(Text)
+        local num = tonumber(Text)
+        if num then bdBeheadX = num end
+    end
+})
+BDTab:CreateInput({
+    Name = "Behead Size Y",
+    PlaceholderText = "7.5",
+    RemoveTextAfterFocusLost = false,
+    Flag = "BD_BeheadY",
+    Callback = function(Text)
+        local num = tonumber(Text)
+        if num then bdBeheadY = num end
+    end
+})
+BDTab:CreateInput({
+    Name = "Behead Size Z",
+    PlaceholderText = "8.5",
+    RemoveTextAfterFocusLost = false,
+    Flag = "BD_BeheadZ",
+    Callback = function(Text)
+        local num = tonumber(Text)
+        if num then bdBeheadZ = num end
+    end
+})
+
+-- GashingWound Size Inputs
+BDTab:CreateParagraph({ Title = "GashingWound (121086746534252)", Content = "" })
+BDTab:CreateInput({
+    Name = "GashingWound Size X",
+    PlaceholderText = "5.5",
+    RemoveTextAfterFocusLost = false,
+    Flag = "BD_GashX",
+    Callback = function(Text)
+        local num = tonumber(Text)
+        if num then bdGashX = num end
+    end
+})
+BDTab:CreateInput({
+    Name = "GashingWound Size Y",
+    PlaceholderText = "7.5",
+    RemoveTextAfterFocusLost = false,
+    Flag = "BD_GashY",
+    Callback = function(Text)
+        local num = tonumber(Text)
+        if num then bdGashY = num end
+    end
+})
+BDTab:CreateInput({
+    Name = "GashingWound Size Z",
+    PlaceholderText = "8.5",
+    RemoveTextAfterFocusLost = false,
+    Flag = "BD_GashZ",
+    Callback = function(Text)
+        local num = tonumber(Text)
+        if num then bdGashZ = num end
+    end
+})
+
 TechTab:CreateToggle({
     Name = "Double Punch Tech",
     CurrentValue = false,
@@ -2396,7 +2503,20 @@ local function attemptBDParts(sound)
     local Debris = game:GetService("Debris")
 
     if antiFlickOn then
-        local basePartSize = Vector3.new(5.5, 7.5, 8.5)
+        -- Ekstrak ID animasi
+        local animId = extractNumericSoundId(sound)
+
+        -- Tentukan ukuran DASAR berdasarkan ID
+        local basePartSize
+        if animId == "126355327951215" then
+            basePartSize = Vector3.new(bdBeheadX, bdBeheadY, bdBeheadZ)
+        elseif animId == "121086746534252" then
+            basePartSize = Vector3.new(bdGashX, bdGashY, bdGashZ)
+        else
+            basePartSize = Vector3.new(bdBaseX, bdBaseY, bdBaseZ)
+        end
+
+        -- Terapkan multiplier global seperti biasa
         local partSize = basePartSize * (blockPartsSizeMultiplier or 1)
         local count = math.max(1, antiFlickParts or 4)
         local base  = antiFlickBaseOffset or 2.5
